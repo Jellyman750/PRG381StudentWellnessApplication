@@ -1,29 +1,53 @@
-<%-- 
-    Document   : register.jsp
-    Created on : 09 Jul 2025, 18:21:58
-    Author     : kyles
---%>
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Register - Student Wellness App</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
 </head>
 <body>
-    <h1>Register</h1>
-    <form action="register_process.jsp" method="post">
-        <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username" required><br><br>
+    <div class="container">
+        <h1>Student Registration</h1>
+       <form action="register" method="post">
+           <div class="form-group">
+               <label for="studentNumber">Student Number:</label>
+               <input type="text" id="studentNumber" name="studentNumber" placeholder="e.g. 20251234" required>
+           </div>
 
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password" required><br><br>
+           <div class="form-group">
+               <label for="firstName">First Name:</label>
+               <input type="text" id="firstName" name="firstName" placeholder="John" required>
+           </div>
 
-        <label for="email">Email:</label><br>
-        <input type="email" id="email" name="email" required><br><br>
+           <div class="form-group">
+               <label for="lastName">Last Name:</label>
+               <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+           </div>
 
-        <input type="submit" value="Register">
-    </form>
-    <p><a href="index.jsp">Back to Home</a></p>
+           <div class="form-group">
+               <label for="email">Email Address:</label>
+               <input type="email" id="email" name="email" placeholder="john.doe@example.com" required>
+           </div>
+
+           <div class="form-group">
+               <label for="phone">Phone Number:</label>
+               <input type="tel" id="phone" name="phone" placeholder="e.g. 0821234567" required>
+           </div>
+
+           <div class="form-group">
+               <label for="password">Password:</label>
+               <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+           </div>
+
+           <div class="form-group">
+               <button type="submit" class="btn">Register</button>
+           </div>
+       </form>
+
+        <div class="back-link">
+            <p><a href="index.jsp">← Back to Home</a></p>
+        </div>
+    </div>
 </body>
 </html>
