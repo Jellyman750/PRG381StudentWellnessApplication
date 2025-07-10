@@ -1,5 +1,9 @@
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<% if (request.getAttribute("error") != null) { %>
+    <p style="color: red;"><%= request.getAttribute("error") %></p>
+<% } %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +14,7 @@
 <body>
     <div class="container">
         <h1>Login</h1>
-        <form action="login_process.jsp" method="post">
+        <form action="LoginServlet" method="post">
             <label for="username">Username / Email:</label>
             <input type="text" id="username" name="username" placeholder="Enter your email" required>
 
