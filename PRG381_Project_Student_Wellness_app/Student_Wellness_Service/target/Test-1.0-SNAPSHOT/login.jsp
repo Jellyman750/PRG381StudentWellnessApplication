@@ -1,7 +1,9 @@
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<% if (request.getAttribute("error") != null) { %>
-    <p style="color: red;"><%= request.getAttribute("error") %></p>
+<!--display errors-->
+<% String error = (String) request.getAttribute("error"); %>
+<% if (error != null) { %>
+    <div style="color: red;"><%= error %></div>
 <% } %>
 
 <!DOCTYPE html>

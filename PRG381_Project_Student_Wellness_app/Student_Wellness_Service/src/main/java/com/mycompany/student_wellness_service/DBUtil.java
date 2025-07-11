@@ -17,15 +17,14 @@ public class DBUtil {
     public static Connection getConnection() throws SQLException {
        try {
             Class.forName("org.postgresql.Driver");
-            System.out.println("DBUtil: Connecting to database...");
             Connection conn = DriverManager.getConnection(URL);
-            System.out.println("DBUtil: Connection successful");
+            //System.out.println("DBUtil: Connection successful"); //debug
             return conn;
         } catch (ClassNotFoundException e) {
-            System.out.println("DBUtil: PostgreSQL Driver not found");
+            //System.out.println("DBUtil: Postgres Driver not found");// for debug
             throw new SQLException("PostgreSQL Driver not found", e);
         } catch (SQLException e) {
-            System.out.println("DBUtil: Connection failed: " + e.getMessage());
+            //System.out.println("Connection failed: " + e.getMessage());//debug
             throw e;
         }
     }  

@@ -6,14 +6,15 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8" import="com.mycompany.student_wellness_service.User"%>
 <%
-
+    //gets the user object from session
     User user = (User) session.getAttribute("user");
-
-    if (user == null) {
+    if (user == null ) {
         response.sendRedirect("login.jsp");
         return;
     }
 %>
+
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -22,5 +23,9 @@
     </head>
     <body>
         <h1>Welcome, <%= user.getName() %> <%= user.getSurname() %>!</h1>
+        
+        <form action="logout" method="post">
+            <input type="submit" value="Logout">
+</form>
     </body>
 </html>
