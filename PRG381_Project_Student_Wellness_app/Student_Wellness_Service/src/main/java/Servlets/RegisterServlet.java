@@ -31,10 +31,10 @@ public class RegisterServlet extends HttpServlet {
             Connection conn = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/wellness_db", 
                 "postgres", 
-                "yourpassword"  // 🔐 change to your real password
+                "yourpassword"  // change to your real password
             );
 
-            // ❌ Check if user already exists
+            //  Check if user already exists
             PreparedStatement checkStmt = conn.prepareStatement(
                 "SELECT * FROM users WHERE email = ? OR student_number = ?"
             );
