@@ -49,5 +49,37 @@
             <p><a href="index.jsp">← Back to Home</a></p>
         </div>
     </div>
+ <script>
+        function validateRegistrationForm() {
+            const studentNumber = document.getElementById("studentNumber").value.trim();
+            const firstName = document.getElementById("firstName").value.trim();
+            const lastName = document.getElementById("lastName").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!studentNumber || !firstName || !lastName || !email || !phone || !password) {
+                alert("Please fill in all fields.");
+                return false;
+            }
+
+            if (!email.includes("@") || !email.includes(".")) {
+                alert("Please enter a valid email address.");
+                return false;
+            }
+
+            if (!/^[0-9]{10,}$/.test(phone)) {
+                alert("Phone number must contain at least 10 digits.");
+                return false;
+            }
+
+            if (password.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return false;
+            }
+
+            return true; // allow form to submit
+        }
+    </script>
 </body>
 </html>
