@@ -15,6 +15,33 @@ public class RegisterServlet extends HttpServlet {
         String phone = request.getParameter("phone");
         String password = request.getParameter("password");
 
+            if (studentNumber == null || studentNumber.isEmpty() ||
+            name == null || name.isEmpty() ||
+            surname == null || surname.isEmpty() ||
+            email == null || email.isEmpty() || !email.contains("@") ||
+            phone == null || phone.isEmpty() || !phone.matches("\\d{10,}") ||
+            password == null || password.isEmpty()) {
+
+            request.setAttribute("error", "Please fill in all fields correctly.");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+         try {
+            Class.forName("org.postgresql.Driver");
+            Connection conn = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/wellness_db", 
+                "postgres", 
+                "yourpassword"  // 🔐 change to your real password
+            );
+
+            // ❌ Check if user already exists
+            PreparedStatement checkStmt = conn.prepareStatement(
+                "SELECT * FROM users WHERE email = ? OR student_number = ?"
+            );
+            checkStmt.setString(1, email);
+            checkStmt.setString(2, studentNumber);
+            ResultSet rs = checkStmt.executeQuery();
+
         try {
             Class.forName("org.postgresql.Driver");
             Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/wellness_db", "postgres", "yourpassword");
