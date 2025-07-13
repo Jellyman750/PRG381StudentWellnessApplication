@@ -6,6 +6,12 @@
 
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+
+<!--display errors-->
+<% String error = (String) request.getAttribute("error"); %>
+<% if (error != null) { %>
+    <div style="color: red;"><%= error %></div>
+<% } %> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -150,6 +156,9 @@
 
       <button type="submit">Login</button>
     </form>
+    <div class="back-link">
+            <p><a href="index.jsp">← Back to Home</a></p>
+        </div>
   </div>
 </body>
 </html>

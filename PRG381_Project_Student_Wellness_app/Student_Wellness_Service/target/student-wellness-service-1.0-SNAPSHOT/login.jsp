@@ -1,19 +1,22 @@
 <%-- 
-    Document   : register
-    Created on : 13 Jul 2025, 17:05:28
+    Document   : login
+    Created on : 13 Jul 2025, 17:05:11
     Author     : kyles
 --%>
 
+
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+
+<!--display errors-->
 <% String error = (String) request.getAttribute("error"); %>
 <% if (error != null) { %>
-    <div style="color:red;"><%= error %></div>
-<% } %>
+    <div style="color: red;"><%= error %></div>
+<% } %> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register - Student Wellness Service</title>
+  <title>Login - Student Wellness Service</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -52,9 +55,9 @@
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.2);
       text-align: center;
-      max-width: 450px;
+      max-width: 400px;
       width: 90%;
-      border: 3px solid black;
+      border: 3px solid #667eea;
     }
 
     img.logo {
@@ -69,21 +72,21 @@
     h2 {
       margin-bottom: 24px;
       font-weight: 700;
-      color: #6a0dad; /* purple to match index and login */
+      color: #6a0dad; /* purple to match index */
     }
 
     form {
       margin: 0;
-      text-align: left;
     }
 
     label {
       display: block;
       margin-top: 15px;
       font-weight: 700;
+      text-align: left;
     }
 
-    input[type="text"], input[type="email"], input[type="password"], input[type="tel"] {
+    input[type="email"], input[type="password"] {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -98,7 +101,7 @@
       margin-top: 20px; 
       padding: 14px 0; 
       width: 100%; 
-      background-color: #667eea; /* same blue border color */
+      background-color: #667eea; /* same as index border */
       border: none; 
       color: white; 
       font-size: 18px;
@@ -114,8 +117,8 @@
 
     .error, .success {
       margin-top: 12px;
-      font-weight: 700;
       text-align: center;
+      font-weight: 700;
     }
 
     .error {
@@ -142,66 +145,20 @@
     <!-- Logo -->
     <img src="images/logo.png" alt="Student Wellness Service Logo" class="logo" />
 
-    <h2>Register</h2>
+    <h2>Login</h2>
 
-    <form action="register" method="post">
-      <label for="student_number">Student Number:</label>
-      <input type="text" id="student_number" name="student_number" required placeholder="e.g. 12345"/>
-
-      <label for="name">First Name:</label>
-      <input type="text" id="name" name="name" required placeholder="e.g. John"/>
-
-      <label for="surname">Surname:</label>
-      <input type="text" id="surname" name="surname" required placeholder="e.g. Doe"/>
-
+    <form action="LoginServlet" method="post">
       <label for="email">Email:</label>
-      <input type="email" id="email" name="email" required placeholder="e.g. john.doe@gmail.com"/>
-
-      <label for="phone">Phone Number:</label>
-      <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" placeholder="e.g. 0123456789" required />
+      <input type="email" id="email" name="email" required />
 
       <label for="password">Password:</label>
       <input type="password" id="password" name="password" required />
 
-      <button type="submit">Register</button>
-      
-       <div class="back-link">
+      <button type="submit">Login</button>
+    </form>
+    <div class="back-link">
             <p><a href="index.jsp">← Back to Home</a></p>
         </div>
-    </form>
   </div>
-    
-     <script>
-        function validateRegistrationForm() {
-            const studentNumber = document.getElementById("student_umber").value.trim();
-            const firstName = document.getElementById("name").value.trim();
-            const lastName = document.getElementById("surname").value.trim();
-            const email = document.getElementById("email").value.trim();
-            const phone = document.getElementById("phone").value.trim();
-            const password = document.getElementById("password").value.trim();
-
-            if (!studentNumber || !firstName || !lastName || !email || !phone || !password) {
-                alert("Please fill in all fields.");
-                return false;
-            }
-
-            if (!email.includes("@") || !email.includes(".")) {
-                alert("Please enter a valid email address.");
-                return false;
-            }
-
-            if (!/^[0-9]{10,}$/.test(phone)) {
-                alert("Phone number must contain at least 10 digits.");
-                return false;
-            }
-
-            if (password.length < 6) {
-                alert("Password must be at least 6 characters long.");
-                return false;
-            }
-
-            return true; // allow form to submit
-        }
-    </script>
 </body>
 </html>

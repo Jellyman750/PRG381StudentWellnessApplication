@@ -23,20 +23,20 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         //gets username/email and password
-        String username = request.getParameter("username");
+        String email = request.getParameter("email");
         String password = request.getParameter("password");
-        //System.out.println("Login attempt: " + username + ", " + password); //for debuging
+        //System.out.println("Login attempt: " + email + ", " + password); //for debuging
 
         // input validation
-        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
            // System.out.println("LoginServlet: Empty username or password"); //used for debugging
             request.setAttribute("error", "Student number and password cannot be empty.");
             request.getRequestDispatcher("login.jsp").forward(request, response);
             return;
         }
 
-        /*try {
-            User user = UserAuthentication.LogIn(username, password);
+        try {
+            User user = UserAuthentication.LogIn(email, password);
             
             if (user != null) { //if the user is not null then log in
                 //System.out.println("LoginServlet: Login successful for student: " + user.getName());//debug
@@ -52,7 +52,7 @@ public class LoginServlet extends HttpServlet {
             //System.out.println("LoginServlet: unexpected error: " + e.getMessage());
             request.setAttribute("error", "Unexpected error: " + e.getMessage());
             request.getRequestDispatcher("login.jsp").forward(request, response); 
-        } */
+        } 
     }
     @Override
     public String getServletInfo() {
