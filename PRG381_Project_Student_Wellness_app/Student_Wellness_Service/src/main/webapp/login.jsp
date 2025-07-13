@@ -51,7 +51,7 @@
       text-align: center;
       max-width: 400px;
       width: 90%;
-      border: 3px solid #667eea;
+      border: 3px solid black;
     }
 
     img.logo {
