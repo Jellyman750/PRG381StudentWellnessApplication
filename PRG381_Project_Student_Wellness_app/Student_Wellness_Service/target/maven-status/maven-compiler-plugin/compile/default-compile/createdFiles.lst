@@ -1,8 +1,0 @@
-com\mycompany\student_wellness_service\resources\JakartaEE8Resource.class
-com\mycompany\student_wellness_service\User.class
-Servlets\LogoutServlet.class
-Servlets\RegisterServlet.class
-Servlets\LoginServlet.class
-com\mycompany\student_wellness_service\DBUtil.class
-com\mycompany\student_wellness_service\JakartaRestConfiguration.class
-com\mycompany\student_wellness_service\UserAuthentication.class

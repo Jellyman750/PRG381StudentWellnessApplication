@@ -35,7 +35,7 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        try {
+        /*try {
             User user = UserAuthentication.LogIn(username, password);
             
             if (user != null) { //if the user is not null then log in
@@ -52,7 +52,7 @@ public class LoginServlet extends HttpServlet {
             //System.out.println("LoginServlet: unexpected error: " + e.getMessage());
             request.setAttribute("error", "Unexpected error: " + e.getMessage());
             request.getRequestDispatcher("login.jsp").forward(request, response); 
-        } 
+        } */
     }
     @Override
     public String getServletInfo() {
