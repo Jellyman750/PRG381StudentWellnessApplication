@@ -12,6 +12,7 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.sql.SQLException;
+import org.mindrot.jbcrypt.BCrypt;
 /**
  *
  * @author tarina

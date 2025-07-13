@@ -1,4 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<% String error = (String) request.getAttribute("error"); %>
+<% if (error != null) { %>
+    <div style="color:red;"><%= error %></div>
+<% } %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,6 +48,7 @@
            <div class="form-group">
                <button type="submit" class="btn">Register</button>
            </div>
+           
        </form>
 
         <div class="back-link">

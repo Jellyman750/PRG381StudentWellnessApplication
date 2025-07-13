@@ -1,20 +1,30 @@
 package Servlets;
 
+//imports
 import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.sql.*;
+import com.mycompany.student_wellness_service.DBUtil;//import database connection
+import javax.servlet.annotation.WebServlet;
+import org.mindrot.jbcrypt.BCrypt;
 
+
+@WebServlet(name = "RegisterServlet", urlPatterns = {"/register"})
 public class RegisterServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String studentNumber = request.getParameter("student_number");
-        String name = request.getParameter("name");
-        String surname = request.getParameter("surname");
-        String email = request.getParameter("email");
-        String phone = request.getParameter("phone");
-        String password = request.getParameter("password");
-
+        //get user inputs
+        String studentNumber = request.getParameter("studentNumber").trim();
+        String name = request.getParameter("firstName").trim();
+        String surname = request.getParameter("lastName").trim();
+        String email = request.getParameter("email").trim();
+        String phone = request.getParameter("phone").trim();
+        String password = request.getParameter("password").trim();
+        
+        
+        
+        //input validation
             if (studentNumber == null || studentNumber.isEmpty() ||
             name == null || name.isEmpty() ||
             surname == null || surname.isEmpty() ||
@@ -26,53 +36,43 @@ public class RegisterServlet extends HttpServlet {
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
-         try {
-            Class.forName("org.postgresql.Driver");
-            Connection conn = DriverManager.getConnection(
-                "jdbc:postgresql://localhost:5432/wellness_db", 
-                "postgres", 
-                "yourpassword"  // change to your real password
-            );
+         try (Connection conn=DBUtil.getConnection()){
 
             //  Check if user already exists
             PreparedStatement checkStmt = conn.prepareStatement(
                 "SELECT * FROM users WHERE email = ? OR student_number = ?"
             );
             checkStmt.setString(1, email);
-            checkStmt.setString(2, studentNumber);
-            ResultSet rs = checkStmt.executeQuery();
-
-        try {
-            Class.forName("org.postgresql.Driver");
-            Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/wellness_db", "postgres", "yourpassword");
-
-            PreparedStatement checkStmt = conn.prepareStatement("SELECT * FROM users WHERE email = ? OR student_number = ?");
-            checkStmt.setString(1, email);
-            checkStmt.setString(2, studentNumber);
+            checkStmt.setInt(2,  Integer.parseInt(studentNumber));
             ResultSet rs = checkStmt.executeQuery();
 
             if (rs.next()) {
+                //System.out.println("User already exists.");//debug
                 request.setAttribute("error", "User already exists.");
                 request.getRequestDispatcher("register.jsp").forward(request, response);
             } else {
                 PreparedStatement insertStmt = conn.prepareStatement(
                         "INSERT INTO users (student_number, name, surname, email, phone, password) VALUES (?, ?, ?, ?, ?, ?)"
                 );
-                insertStmt.setString(1, studentNumber);
+                String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());//hash the password  
+                
+                insertStmt.setInt(1,  Integer.parseInt(studentNumber));
                 insertStmt.setString(2, name);
                 insertStmt.setString(3, surname);
                 insertStmt.setString(4, email);
                 insertStmt.setString(5, phone);
-                insertStmt.setString(6, password);
+                insertStmt.setString(6, hashedPassword);
                 insertStmt.executeUpdate();
-
+                //System.out.println("User inserted successfully.");//debugging    
                 response.sendRedirect("login.jsp?success=1");
             }
 
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("register.jsp?error=1");
+            request.setAttribute("error", "Registration failed: " + e.getMessage());
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            //response.sendRedirect("register.jsp?error=1");
         }
     }
 }

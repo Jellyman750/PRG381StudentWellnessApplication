@@ -8,7 +8,7 @@ package com.mycompany.student_wellness_service;
  *
  * @author tarina
  */
-
+//this was used to hash all the existing 
 import java.sql.*;
 public class DBUtil {
   //url to connect to db
@@ -18,13 +18,13 @@ public class DBUtil {
        try {
             Class.forName("org.postgresql.Driver");
             Connection conn = DriverManager.getConnection(URL);
-            //System.out.println("DBUtil: Connection successful"); //debug
+           // System.out.println("DBUtil: Connection successful"); //debug
             return conn;
         } catch (ClassNotFoundException e) {
-            //System.out.println("DBUtil: Postgres Driver not found");// for debug
+           // System.out.println("DBUtil: Postgres Driver not found");// for debug
             throw new SQLException("PostgreSQL Driver not found", e);
         } catch (SQLException e) {
-            //System.out.println("Connection failed: " + e.getMessage());//debug
+           // System.out.println("Connection failed: " + e.getMessage());//debug
             throw e;
         }
     }  
