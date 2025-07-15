@@ -2,15 +2,26 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */package com.studentWellness.gui;
+
+import com.studentWellness.logic.AppointmentManager;
+import com.studentWellness.logic.CounselorManager;
+import com.studentWellness.logic.FeedbackManager;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class MainDashboard extends javax.swing.JFrame {
 
+     private final AppointmentManager appointmentManager = new AppointmentManager();
+    private final CounselorManager counselorManager = new CounselorManager();
+    private final FeedbackManager feedbackManager = new FeedbackManager();
+
     public MainDashboard() {
         initComponents();
         addActionListeners();
+        viewAppointments();
+        viewAllCounselors();
+        viewFeedback();
     }
 
     private void addActionListeners() {
