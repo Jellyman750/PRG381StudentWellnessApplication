@@ -72,10 +72,16 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void addCounselor() {
+        if (comboCounselor.getSelectedItem() == null || txtCounselorEmail.getText().isEmpty() ||
+                txtSpecialization.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
+            return;
+        }
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.addRow(new Object[]{
-                txtName.getText(),
+                comboCounselor.getSelectedItem().toString(),
                 txtSpecialization.getText(),
+                txtCounselorEmail.getText(),
                 jComboBox1.getSelectedItem().toString()
         });
         JOptionPane.showMessageDialog(this, "Counselor added (dummy data).");
@@ -95,8 +101,9 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void clearCounselorFields() {
-        txtName.setText("");
+        comboCounselor.setSelectedIndex(-1);
         txtSpecialization.setText("");
+        txtCounselorEmail.setText("");
         jComboBox1.setSelectedIndex(0);
     }
 
@@ -260,28 +267,33 @@ public class MainDashboard extends javax.swing.JFrame {
 
         // === COUNSELORS TAB ===
         panelCounselors = new JPanel();
-        labName = new JLabel("Name:");
-        txtName = new JTextField();
-        labSpecialization = new JLabel("Specialization:");
+        labCounselor = new JLabel("Counselor:");
         txtSpecialization = new JTextField();
+        labSpecialization = new JLabel("Specialization:");
+        txtCounselorEmail = new JTextField();
+        labCounselorEmail = new JLabel("Email:");
         labAvailability = new JLabel("Availability:");
+        comboCounselor = new JComboBox<>(new String[]{"John Doe", "Jane Smith", "Alex Brown"}); // Placeholder for database
         jComboBox1 = new JComboBox<>(new String[]{"Available", "Not Available"});
 
         // Set white text and consistent font for labels
-        labName.setForeground(Color.WHITE);
-        labName.setFont(labelFont);
+        labCounselor.setForeground(Color.WHITE);
+        labCounselor.setFont(labelFont);
         labSpecialization.setForeground(Color.WHITE);
         labSpecialization.setFont(labelFont);
+        labCounselorEmail.setForeground(Color.WHITE);
+        labCounselorEmail.setFont(labelFont);
         labAvailability.setForeground(Color.WHITE);
         labAvailability.setFont(labelFont);
 
-        txtName.setFont(new Font("Arial", Font.PLAIN, 14));
         txtSpecialization.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtCounselorEmail.setFont(new Font("Arial", Font.PLAIN, 14));
+        comboCounselor.setFont(new Font("Arial", Font.PLAIN, 14));
         jComboBox1.setFont(new Font("Arial", Font.PLAIN, 14));
 
         jTable1 = new JTable(new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Name", "Specialization", "Availability"}
+                new String[]{"Counselor", "Specialization", "Email", "Availability"}
         ));
         jTable1.setFont(new Font("Arial", Font.PLAIN, 12));
         jScrollPane1 = new JScrollPane(jTable1);
@@ -309,10 +321,12 @@ public class MainDashboard extends javax.swing.JFrame {
                         .addGroup(cLayout.createSequentialGroup()
                                 .addGap(20)
                                 .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(labName)
-                                        .addComponent(txtName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(labCounselor)
+                                        .addComponent(comboCounselor, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(labSpecialization)
                                         .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(labCounselorEmail)
+                                        .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(labAvailability)
                                         .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
                                 .addGap(20)
@@ -338,13 +352,17 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addGap(20)
                                 .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addGroup(cLayout.createSequentialGroup()
-                                                .addComponent(labName)
+                                                .addComponent(labCounselor)
                                                 .addGap(6)
-                                                .addComponent(txtName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(comboCounselor, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(labSpecialization)
                                                 .addGap(6)
                                                 .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
+                                                .addComponent(labCounselorEmail)
+                                                .addGap(6)
+                                                .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(labAvailability)
                                                 .addGap(6)
@@ -368,15 +386,25 @@ public class MainDashboard extends javax.swing.JFrame {
         panelFeedback = new JPanel();
         jLabel6 = new JLabel("Select Counselor:");
         jLabel7 = new JLabel("Feedback:");
+        jLabel8 = new JLabel("Student Number:");
+        jLabel9 = new JLabel("Submission Date:");
 
         // Set white text and consistent font for labels
         jLabel6.setForeground(Color.WHITE);
         jLabel6.setFont(labelFont);
         jLabel7.setForeground(Color.WHITE);
         jLabel7.setFont(labelFont);
+        jLabel8.setForeground(Color.WHITE);
+        jLabel8.setFont(labelFont);
+        jLabel9.setForeground(Color.WHITE);
+        jLabel9.setFont(labelFont);
 
         jComboBox2 = new JComboBox<>(new String[]{"Counselor 1", "Counselor 2", "Counselor 3"});
         jComboBox2.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtStudentNumber = new JTextField();
+        txtStudentNumber.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtSubmissionDate = new JTextField();
+        txtSubmissionDate.setFont(new Font("Arial", Font.PLAIN, 14));
         jTextArea1 = new JTextArea(5, 20);
         jTextArea1.setFont(new Font("Arial", Font.PLAIN, 14));
         jTextArea1.setLineWrap(true);
@@ -406,6 +434,10 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(jLabel6)
                                         .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel8)
+                                        .addComponent(txtStudentNumber, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel9)
+                                        .addComponent(txtSubmissionDate, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel7)
                                         .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
                                         .addGroup(fLayout.createSequentialGroup()
@@ -425,10 +457,18 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addComponent(jLabel6)
                                 .addGap(6)
                                 .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addGap(15)
+                                .addGap(10)
+                                .addComponent(jLabel8)
+                                .addGap(6)
+                                .addComponent(txtStudentNumber, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addGap(10)
+                                .addComponent(jLabel9)
+                                .addGap(6)
+                                .addComponent(txtSubmissionDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addGap(10)
                                 .addComponent(jLabel7)
                                 .addGap(6)
-                                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 150, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE)
                                 .addGap(15)
                                 .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnSubmitFeedback)
@@ -459,9 +499,9 @@ public class MainDashboard extends javax.swing.JFrame {
     private JTabbedPane jTabbedPane2;
     private JDesktopPane jDesktopPane1;
     private JPanel panelCounselors, panelFeedback;
-    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, labName, labSpecialization, labAvailability;
-    private JTextField txtStudentName, txtCounselorName, txtDate, txtTime, txtName, txtSpecialization;
-    private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2;
+    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, labCounselor, labSpecialization, labCounselorEmail, labAvailability;
+    private JTextField txtStudentName, txtCounselorName, txtDate, txtTime, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate;
+    private JComboBox<String> comboBoxStatus, comboCounselor, jComboBox1, jComboBox2;
     private JTable jTable1, jTable2;
     private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3;
     private JTextArea jTextArea1;
