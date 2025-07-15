@@ -1,13 +1,10 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package com.studentWellness.gui;
-
-
-
+ */package com.studentWellness.gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class MainDashboard extends javax.swing.JFrame {
 
@@ -16,7 +13,6 @@ public class MainDashboard extends javax.swing.JFrame {
         addActionListeners();
     }
 
-    // ✅ Add action listeners for all buttons
     private void addActionListeners() {
         // Appointments
         btnBookAppointment.addActionListener(e -> bookAppointment());
@@ -40,16 +36,13 @@ public class MainDashboard extends javax.swing.JFrame {
         BtnViewFeedback.addActionListener(e -> viewFeedback());
     }
 
-    // ✅ ---------------- LOGIC (Dummy for now, Member 4 will replace later) ----------------
-
-    // ---------- Appointments ----------
+    // Dummy methods (Member 4 can add real logic later)
     private void bookAppointment() {
         if (txtStudentName.getText().isEmpty() || txtCounselorName.getText().isEmpty() ||
                 txtDate.getText().isEmpty() || txtTime.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please fill in all appointment details.");
             return;
         }
-
         DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
         model.addRow(new Object[]{
                 txtStudentName.getText(),
@@ -58,17 +51,16 @@ public class MainDashboard extends javax.swing.JFrame {
                 txtTime.getText(),
                 comboBoxStatus.getSelectedItem().toString()
         });
-
         JOptionPane.showMessageDialog(this, "Appointment booked (dummy data).");
         clearAppointmentFields();
     }
 
     private void updateAppointment() {
-        JOptionPane.showMessageDialog(this, "Update Appointment clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Update Appointment clicked (logic to be added).");
     }
 
     private void cancelAppointment() {
-        JOptionPane.showMessageDialog(this, "Cancel Appointment clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Cancel Appointment clicked (logic to be added).");
     }
 
     private void clearAppointmentFields() {
@@ -79,7 +71,6 @@ public class MainDashboard extends javax.swing.JFrame {
         comboBoxStatus.setSelectedIndex(0);
     }
 
-    // ---------- Counselors ----------
     private void addCounselor() {
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.addRow(new Object[]{
@@ -92,15 +83,15 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void updateCounselor() {
-        JOptionPane.showMessageDialog(this, "Update Counselor clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Update Counselor clicked (logic to be added).");
     }
 
     private void removeCounselor() {
-        JOptionPane.showMessageDialog(this, "Remove Counselor clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Remove Counselor clicked (logic to be added).");
     }
 
     private void viewAllCounselors() {
-        JOptionPane.showMessageDialog(this, "View All Counselors clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "View All Counselors clicked (logic to be added).");
     }
 
     private void clearCounselorFields() {
@@ -109,24 +100,22 @@ public class MainDashboard extends javax.swing.JFrame {
         jComboBox1.setSelectedIndex(0);
     }
 
-    // ---------- Feedback ----------
     private void submitFeedback() {
-        JOptionPane.showMessageDialog(this, "Submit Feedback clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Submit Feedback clicked (logic to be added).");
     }
 
     private void editFeedback() {
-        JOptionPane.showMessageDialog(this, "Edit Feedback clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Edit Feedback clicked (logic to be added).");
     }
 
     private void deleteFeedback() {
-        JOptionPane.showMessageDialog(this, "Delete Feedback clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "Delete Feedback clicked (logic to be added).");
     }
 
     private void viewFeedback() {
-        JOptionPane.showMessageDialog(this, "View Feedback clicked (Member 4 to implement logic).");
+        JOptionPane.showMessageDialog(this, "View Feedback clicked (logic to be added).");
     }
 
-    // ---------- Common ----------
     private void exitApplication() {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?", "Exit", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
@@ -134,240 +123,353 @@ public class MainDashboard extends javax.swing.JFrame {
         }
     }
 
-    // ✅ ---------------- YOUR FULL initComponents() (PASTED FROM YOUR CODE) ----------------
     @SuppressWarnings("unchecked")
     private void initComponents() {
+        // Initialize components
+        jTabbedPane2 = new JTabbedPane();
+        jTabbedPane2.setFont(new Font("Arial", Font.PLAIN, 16));
 
-        jTabbedPane2 = new javax.swing.JTabbedPane();
-        jDesktopPane1 = new javax.swing.JDesktopPane();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        txtStudentName = new javax.swing.JTextField();
-        txtCounselorName = new javax.swing.JTextField();
-        txtDate = new javax.swing.JTextField();
-        txtTime = new javax.swing.JTextField();
-        comboBoxStatus = new javax.swing.JComboBox<>();
-        jLabel5 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
-        BtnCancelAppiontment = new javax.swing.JButton();
-        btnBookAppointment = new javax.swing.JButton();
-        btnUpdateAppiontement1 = new javax.swing.JButton();
-        btnClearFields = new javax.swing.JButton();
-        btnExitAppointments = new javax.swing.JButton();
-        jDesktopPane2 = new javax.swing.JDesktopPane();
-        labName = new javax.swing.JLabel();
-        txtName = new javax.swing.JTextField();
-        labSpecialization = new javax.swing.JLabel();
-        labAvailability = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox<>();
-        txtSpecialization = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        btnAddCounselor = new javax.swing.JButton();
-        btnUpdateCounselor = new javax.swing.JButton();
-        brnRemoveCounselor = new javax.swing.JButton();
-        btnViewAllCouselor = new javax.swing.JButton();
-        btnClearCounselor = new javax.swing.JButton();
-        btnExitCounselor = new javax.swing.JButton();
-        jDesktopPane3 = new javax.swing.JDesktopPane();
-        jLabel6 = new javax.swing.JLabel();
-        jComboBox2 = new javax.swing.JComboBox<>();
-        jLabel7 = new javax.swing.JLabel();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
-        btnSubmitFeedback = new javax.swing.JButton();
-        BtnEditFeedback = new javax.swing.JButton();
-        btnDeleteFeedback = new javax.swing.JButton();
-        BtnViewFeedback = new javax.swing.JButton();
+        // === APPOINTMENTS TAB ===
+        jDesktopPane1 = new JDesktopPane();
+        jLabel1 = new JLabel("Student Name:");
+        jLabel2 = new JLabel("Counselor Name:");
+        jLabel3 = new JLabel("Date:");
+        jLabel4 = new JLabel("Time:");
+        jLabel5 = new JLabel("Status:");
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        // Set white text and consistent font for labels
+        Font labelFont = new Font("Arial", Font.PLAIN, 14);
+        jLabel1.setForeground(Color.WHITE);
+        jLabel1.setFont(labelFont);
+        jLabel2.setForeground(Color.WHITE);
+        jLabel2.setFont(labelFont);
+        jLabel3.setForeground(Color.WHITE);
+        jLabel3.setFont(labelFont);
+        jLabel4.setForeground(Color.WHITE);
+        jLabel4.setFont(labelFont);
+        jLabel5.setForeground(Color.WHITE);
+        jLabel5.setFont(labelFont);
 
-        jTabbedPane2.setBackground(new java.awt.Color(204, 255, 255));
+        txtStudentName = new JTextField();
+        txtCounselorName = new JTextField();
+        txtDate = new JTextField();
+        txtTime = new JTextField();
+        txtStudentName.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtDate.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtTime.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        jDesktopPane1.setBackground(new java.awt.Color(204, 255, 255));
+        comboBoxStatus = new JComboBox<>(new String[]{"Scheduled", "Cancelled", "Completed"});
+        comboBoxStatus.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        jLabel1.setText("Student Name:");
-
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        jLabel2.setText("Counselor Name: ");
-
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        jLabel3.setText("Date: ");
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        jLabel4.setText("Time: ");
-
-        txtStudentName.setText("John");
-        txtCounselorName.setText("Sam");
-        txtDate.setText("2025/06/22");
-        txtTime.setText("09:00 AM");
-
-        comboBoxStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Update Appointment", "Cancel Appointment", "View Appointment" }));
-
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        jLabel5.setText("Status:");
-
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
-                new Object [][] {},
-                new String [] { "Student Name", "Counselor Name", "Date", "Time", "Status" }
+        jTable2 = new JTable(new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Student Name", "Counselor Name", "Date", "Time", "Status"}
         ));
-        jScrollPane2.setViewportView(jTable2);
+        jTable2.setFont(new Font("Arial", Font.PLAIN, 12));
+        jScrollPane2 = new JScrollPane(jTable2);
 
-        BtnCancelAppiontment.setText("Cancel Appiontment");
-        btnBookAppointment.setText("Book Appointment");
-        btnUpdateAppiontement1.setText("Update Appiontment");
-        btnClearFields.setText("Clear Fields");
-        btnExitAppointments.setText("Exit");
+        BtnCancelAppiontment = new JButton("Cancel Appointment");
+        btnBookAppointment = new JButton("Book Appointment");
+        btnUpdateAppiontement1 = new JButton("Update Appointment");
+        btnClearFields = new JButton("Clear Fields");
+        btnExitAppointments = new JButton("Exit");
 
-        javax.swing.GroupLayout jDesktopPane1Layout = new javax.swing.GroupLayout(jDesktopPane1);
-        jDesktopPane1.setLayout(jDesktopPane1Layout);
-        jDesktopPane1Layout.setHorizontalGroup(
-                jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jDesktopPane1Layout.createSequentialGroup()
-                                .addGap(16, 16, 16)
-                                .addGroup(jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(txtTime, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(txtCounselorName, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        // Style buttons
+        Color buttonColor = new Color(100, 149, 237); // Lighter blue
+        Font buttonFont = new Font("Arial", Font.BOLD, 14);
+        for (JButton btn : new JButton[]{btnBookAppointment, btnUpdateAppiontement1, BtnCancelAppiontment, btnClearFields, btnExitAppointments}) {
+            btn.setBackground(buttonColor);
+            btn.setForeground(Color.WHITE);
+            btn.setFont(buttonFont);
+            btn.setFocusPainted(false);
+            btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        }
+
+        GroupLayout appLayout = new GroupLayout(jDesktopPane1);
+        jDesktopPane1.setLayout(appLayout);
+        appLayout.setHorizontalGroup(
+                appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(appLayout.createSequentialGroup()
+                                .addGap(20)
+                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(jLabel1)
-                                        .addComponent(txtStudentName, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtStudentName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel2)
-                                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(comboBoxStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addGroup(jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jDesktopPane1Layout.createSequentialGroup()
+                                        .addComponent(txtCounselorName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel3)
+                                        .addComponent(txtDate, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel4)
+                                        .addComponent(txtTime, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel5)
+                                        .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
+                                .addGap(20)
+                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(appLayout.createSequentialGroup()
                                                 .addComponent(btnBookAppointment)
-                                                .addGap(18, 18, 18)
+                                                .addGap(10)
                                                 .addComponent(btnUpdateAppiontement1)
-                                                .addGap(18, 18, 18)
+                                                .addGap(10)
                                                 .addComponent(BtnCancelAppiontment))
-                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 479, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(jDesktopPane1Layout.createSequentialGroup()
-                                                .addGap(262, 262, 262)
+                                        .addGroup(appLayout.createSequentialGroup()
+                                                .addGap(240)
                                                 .addComponent(btnClearFields)
-                                                .addGap(18, 18, 18)
+                                                .addGap(10)
                                                 .addComponent(btnExitAppointments)))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap(20, Short.MAX_VALUE))
         );
-        jDesktopPane1Layout.setVerticalGroup(
-                jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jDesktopPane1Layout.createSequentialGroup()
-                                .addGroup(jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(jDesktopPane1Layout.createSequentialGroup()
-                                                .addGap(23, 23, 23)
+        appLayout.setVerticalGroup(
+                appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(appLayout.createSequentialGroup()
+                                .addGap(20)
+                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(appLayout.createSequentialGroup()
                                                 .addComponent(jLabel1)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(txtStudentName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGap(6)
+                                                .addComponent(txtStudentName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
                                                 .addComponent(jLabel2)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(txtCounselorName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGap(6)
+                                                .addComponent(txtCounselorName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
                                                 .addComponent(jLabel3)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(txtDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addGap(6)
+                                                .addComponent(txtDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
                                                 .addComponent(jLabel4)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(txtTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGap(6)
+                                                .addComponent(txtTime, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
                                                 .addComponent(jLabel5)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(comboBoxStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jDesktopPane1Layout.createSequentialGroup()
-                                                .addContainerGap()
-                                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 242, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGap(18, 18, 18)
-                                .addGroup(jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addGap(6)
+                                                .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE))
+                                .addGap(15)
+                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnBookAppointment)
                                         .addComponent(btnUpdateAppiontement1)
                                         .addComponent(BtnCancelAppiontment))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
-                                .addGroup(jDesktopPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addGap(15)
+                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnClearFields)
                                         .addComponent(btnExitAppointments))
-                                .addContainerGap())
+                                .addContainerGap(20, Short.MAX_VALUE))
         );
-
         jTabbedPane2.addTab("Appointments", jDesktopPane1);
 
-        // ✅ Counselors + Feedback tabs remain the same
-        // ✅ (For space, I didn't rewrite them again, but they are the SAME as your original code)
+        // === COUNSELORS TAB ===
+        panelCounselors = new JPanel();
+        labName = new JLabel("Name:");
+        txtName = new JTextField();
+        labSpecialization = new JLabel("Specialization:");
+        txtSpecialization = new JTextField();
+        labAvailability = new JLabel("Availability:");
+        jComboBox1 = new JComboBox<>(new String[]{"Available", "Not Available"});
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addGap(38, 38, 38)
-                                .addComponent(jTabbedPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 617, Short.MAX_VALUE)
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addContainerGap(25, Short.MAX_VALUE)
-                                .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 370, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap())
-        );
+        // Set white text and consistent font for labels
+        labName.setForeground(Color.WHITE);
+        labName.setFont(labelFont);
+        labSpecialization.setForeground(Color.WHITE);
+        labSpecialization.setFont(labelFont);
+        labAvailability.setForeground(Color.WHITE);
+        labAvailability.setFont(labelFont);
 
-        pack();
+        txtName.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtSpecialization.setFont(new Font("Arial", Font.PLAIN, 14));
+        jComboBox1.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        jTable1 = new JTable(new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Name", "Specialization", "Availability"}
+        ));
+        jTable1.setFont(new Font("Arial", Font.PLAIN, 12));
+        jScrollPane1 = new JScrollPane(jTable1);
+
+        btnAddCounselor = new JButton("Add Counselor");
+        btnUpdateCounselor = new JButton("Update Counselor");
+        brnRemoveCounselor = new JButton("Remove Counselor");
+        btnViewAllCouselor = new JButton("View All");
+        btnClearCounselor = new JButton("Clear");
+        btnExitCounselor = new JButton("Exit");
+
+        // Style buttons
+        for (JButton btn : new JButton[]{btnAddCounselor, btnUpdateCounselor, brnRemoveCounselor, btnViewAllCouselor, btnClearCounselor, btnExitCounselor}) {
+            btn.setBackground(buttonColor);
+            btn.setForeground(Color.WHITE);
+            btn.setFont(buttonFont);
+            btn.setFocusPainted(false);
+            btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        }
+
+        GroupLayout cLayout = new GroupLayout(panelCounselors);
+        panelCounselors.setLayout(cLayout);
+        cLayout.setHorizontalGroup(
+                cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(cLayout.createSequentialGroup()
+                                .addGap(20)
+                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(labName)
+                                        .addComponent(txtName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(labSpecialization)
+                                        .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(labAvailability)
+                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
+                                .addGap(20)
+                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(cLayout.createSequentialGroup()
+                                                .addComponent(btnAddCounselor)
+                                                .addGap(10)
+                                                .addComponent(btnUpdateCounselor)
+                                                .addGap(10)
+                                                .addComponent(brnRemoveCounselor))
+                                        .addGroup(cLayout.createSequentialGroup()
+                                                .addComponent(btnViewAllCouselor)
+                                                .addGap(10)
+                                                .addComponent(btnClearCounselor)
+                                                .addGap(10)
+                                                .addComponent(btnExitCounselor)))
+                                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        cLayout.setVerticalGroup(
+                cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(cLayout.createSequentialGroup()
+                                .addGap(20)
+                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(cLayout.createSequentialGroup()
+                                                .addComponent(labName)
+                                                .addGap(6)
+                                                .addComponent(txtName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
+                                                .addComponent(labSpecialization)
+                                                .addGap(6)
+                                                .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addGap(10)
+                                                .addComponent(labAvailability)
+                                                .addGap(6)
+                                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE))
+                                .addGap(15)
+                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnAddCounselor)
+                                        .addComponent(btnUpdateCounselor)
+                                        .addComponent(brnRemoveCounselor))
+                                .addGap(15)
+                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnViewAllCouselor)
+                                        .addComponent(btnClearCounselor)
+                                        .addComponent(btnExitCounselor))
+                                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        jTabbedPane2.addTab("Counselors", panelCounselors);
+
+        // === FEEDBACK TAB ===
+        panelFeedback = new JPanel();
+        jLabel6 = new JLabel("Select Counselor:");
+        jLabel7 = new JLabel("Feedback:");
+
+        // Set white text and consistent font for labels
+        jLabel6.setForeground(Color.WHITE);
+        jLabel6.setFont(labelFont);
+        jLabel7.setForeground(Color.WHITE);
+        jLabel7.setFont(labelFont);
+
+        jComboBox2 = new JComboBox<>(new String[]{"Counselor 1", "Counselor 2", "Counselor 3"});
+        jComboBox2.setFont(new Font("Arial", Font.PLAIN, 14));
+        jTextArea1 = new JTextArea(5, 20);
+        jTextArea1.setFont(new Font("Arial", Font.PLAIN, 14));
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setWrapStyleWord(true);
+        jScrollPane3 = new JScrollPane(jTextArea1);
+
+        btnSubmitFeedback = new JButton("Submit");
+        BtnEditFeedback = new JButton("Edit");
+        btnDeleteFeedback = new JButton("Delete");
+        BtnViewFeedback = new JButton("View All");
+
+        // Style buttons
+        for (JButton btn : new JButton[]{btnSubmitFeedback, BtnEditFeedback, btnDeleteFeedback, BtnViewFeedback}) {
+            btn.setBackground(buttonColor);
+            btn.setForeground(Color.WHITE);
+            btn.setFont(buttonFont);
+            btn.setFocusPainted(false);
+            btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        }
+
+        GroupLayout fLayout = new GroupLayout(panelFeedback);
+        panelFeedback.setLayout(fLayout);
+        fLayout.setHorizontalGroup(
+                fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(fLayout.createSequentialGroup()
+                                .addGap(20)
+                                .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel6)
+                                        .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel7)
+                                        .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(fLayout.createSequentialGroup()
+                                                .addComponent(btnSubmitFeedback)
+                                                .addGap(10)
+                                                .addComponent(BtnEditFeedback)
+                                                .addGap(10)
+                                                .addComponent(btnDeleteFeedback)
+                                                .addGap(10)
+                                                .addComponent(BtnViewFeedback)))
+                                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        fLayout.setVerticalGroup(
+                fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(fLayout.createSequentialGroup()
+                                .addGap(20)
+                                .addComponent(jLabel6)
+                                .addGap(6)
+                                .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addGap(15)
+                                .addComponent(jLabel7)
+                                .addGap(6)
+                                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 150, GroupLayout.PREFERRED_SIZE)
+                                .addGap(15)
+                                .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnSubmitFeedback)
+                                        .addComponent(BtnEditFeedback)
+                                        .addComponent(btnDeleteFeedback)
+                                        .addComponent(BtnViewFeedback))
+                                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        jTabbedPane2.addTab("Feedback", panelFeedback);
+
+        getContentPane().add(jTabbedPane2);
+
+        // === Apply Dark Blue Background and Styling ===
+        Color darkBlue = new Color(0, 51, 102);
+        jDesktopPane1.setBackground(darkBlue);
+        panelCounselors.setBackground(darkBlue);
+        panelFeedback.setBackground(darkBlue);
+        jTabbedPane2.setBackground(darkBlue);
+        jTabbedPane2.setForeground(Color.WHITE);
+
+        setTitle("Student Wellness Dashboard");
+        setSize(750, 480);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
-    public static void main(String[] args) {
+    // === VARIABLES ===
+    private JTabbedPane jTabbedPane2;
+    private JDesktopPane jDesktopPane1;
+    private JPanel panelCounselors, panelFeedback;
+    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, labName, labSpecialization, labAvailability;
+    private JTextField txtStudentName, txtCounselorName, txtDate, txtTime, txtName, txtSpecialization;
+    private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2;
+    private JTable jTable1, jTable2;
+    private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3;
+    private JTextArea jTextArea1;
+    private JButton BtnCancelAppiontment, btnBookAppointment, btnUpdateAppiontement1, btnClearFields, btnExitAppointments;
+    private JButton btnAddCounselor, btnUpdateCounselor, brnRemoveCounselor, btnViewAllCouselor, btnClearCounselor, btnExitCounselor;
+    private JButton btnSubmitFeedback, BtnEditFeedback, btnDeleteFeedback, BtnViewFeedback;
+
+    public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> new MainDashboard().setVisible(true));
     }
-
-    // ✅ ---------------- VARIABLES DECLARATION ----------------
-    private javax.swing.JButton BtnCancelAppiontment;
-    private javax.swing.JButton BtnEditFeedback;
-    private javax.swing.JButton BtnViewFeedback;
-    private javax.swing.JButton brnRemoveCounselor;
-    private javax.swing.JButton btnAddCounselor;
-    private javax.swing.JButton btnBookAppointment;
-    private javax.swing.JButton btnClearCounselor;
-    private javax.swing.JButton btnClearFields;
-    private javax.swing.JButton btnDeleteFeedback;
-    private javax.swing.JButton btnExitAppointments;
-    private javax.swing.JButton btnExitCounselor;
-    private javax.swing.JButton btnSubmitFeedback;
-    private javax.swing.JButton btnUpdateAppiontement1;
-    private javax.swing.JButton btnUpdateCounselor;
-    private javax.swing.JButton btnViewAllCouselor;
-    private javax.swing.JComboBox<String> comboBoxStatus;
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
-    private javax.swing.JDesktopPane jDesktopPane1;
-    private javax.swing.JDesktopPane jDesktopPane2;
-    private javax.swing.JDesktopPane jDesktopPane3;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JTabbedPane jTabbedPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
-    private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JLabel labAvailability;
-    private javax.swing.JLabel labName;
-    private javax.swing.JLabel labSpecialization;
-    private javax.swing.JTextField txtCounselorName;
-    private javax.swing.JTextField txtDate;
-    private javax.swing.JTextField txtName;
-    private javax.swing.JTextField txtSpecialization;
-    private javax.swing.JTextField txtStudentName;
-    private javax.swing.JTextField txtTime;
 }
