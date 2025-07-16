@@ -1,8 +1,8 @@
-//package com.studentWellness.logic;
+package gui;
 
+import java.io.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.io.*;
 
 public class AppointmentLogic {
 

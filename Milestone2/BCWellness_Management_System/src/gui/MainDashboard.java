@@ -1,20 +1,18 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */package com.studentWellness.gui;
+ */
+package com.studentWellness.gui;
 
-import com.studentWellness.logic.AppointmentManager;
-import com.studentWellness.logic.CounselorManager;
-import com.studentWellness.logic.FeedbackManager;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class MainDashboard extends javax.swing.JFrame {
 
-     private final AppointmentManager appointmentManager = new AppointmentManager();
-    private final CounselorManager counselorManager = new CounselorManager();
-    private final FeedbackManager feedbackManager = new FeedbackManager();
+    private final AppointmentLogic appointmentManager = new AppointmentLogic();
+    private final CounselorLogic counselorManager = new CounselorLogic();
+    private final FeedbackLogic feedbackManager = new FeedbackLogic();
 
     public MainDashboard() {
         initComponents();
@@ -27,27 +25,27 @@ public class MainDashboard extends javax.swing.JFrame {
     private void addActionListeners() {
         // Appointments
         btnBookAppointment.addActionListener(e -> bookAppointment());
-        btnUpdateAppiontement1.addActionListener(e -> updateAppointment());
-        BtnCancelAppiontment.addActionListener(e -> cancelAppointment());
+        btnUpdateAppointment1.addActionListener(e -> updateAppointment());
+        btnCancelAppointment.addActionListener(e -> cancelAppointment());
         btnClearFields.addActionListener(e -> clearAppointmentFields());
         btnExitAppointments.addActionListener(e -> exitApplication());
 
         // Counselors
         btnAddCounselor.addActionListener(e -> addCounselor());
         btnUpdateCounselor.addActionListener(e -> updateCounselor());
-        brnRemoveCounselor.addActionListener(e -> removeCounselor());
-        btnViewAllCouselor.addActionListener(e -> viewAllCounselors());
+        btnRemoveCounselor.addActionListener(e -> removeCounselor());
+        btnViewAllCounselors.addActionListener(e -> viewAllCounselors());
         btnClearCounselor.addActionListener(e -> clearCounselorFields());
         btnExitCounselor.addActionListener(e -> exitApplication());
 
         // Feedback
         btnSubmitFeedback.addActionListener(e -> submitFeedback());
-        BtnEditFeedback.addActionListener(e -> editFeedback());
+        btnEditFeedback.addActionListener(e -> editFeedback());
         btnDeleteFeedback.addActionListener(e -> deleteFeedback());
-        BtnViewFeedback.addActionListener(e -> viewFeedback());
+        btnViewFeedback.addActionListener(e -> viewFeedback());
     }
 
-    // Dummy methods (Member 4 can add real logic later)
+    // Dummy methods for UI
     private void bookAppointment() {
         if (txtStudentName.getText().isEmpty() || txtCounselorName.getText().isEmpty() ||
                 txtDate.getText().isEmpty() || txtTime.getText().isEmpty()) {
@@ -134,6 +132,10 @@ public class MainDashboard extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "View Feedback clicked (logic to be added).");
     }
 
+    private void viewAppointments() {
+        JOptionPane.showMessageDialog(this, "View Appointments (logic to be added).");
+    }
+
     private void exitApplication() {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?", "Exit", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
@@ -143,7 +145,6 @@ public class MainDashboard extends javax.swing.JFrame {
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
-        // Initialize components
         jTabbedPane2 = new JTabbedPane();
         jTabbedPane2.setFont(new Font("Arial", Font.PLAIN, 16));
 
@@ -155,7 +156,6 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel4 = new JLabel("Time:");
         jLabel5 = new JLabel("Status:");
 
-        // Set white text and consistent font for labels
         Font labelFont = new Font("Arial", Font.PLAIN, 14);
         jLabel1.setForeground(Color.WHITE);
         jLabel1.setFont(labelFont);
@@ -187,16 +187,15 @@ public class MainDashboard extends javax.swing.JFrame {
         jTable2.setFont(new Font("Arial", Font.PLAIN, 12));
         jScrollPane2 = new JScrollPane(jTable2);
 
-        BtnCancelAppiontment = new JButton("Cancel Appointment");
+        btnCancelAppointment = new JButton("Cancel Appointment");
         btnBookAppointment = new JButton("Book Appointment");
-        btnUpdateAppiontement1 = new JButton("Update Appointment");
+        btnUpdateAppointment1 = new JButton("Update Appointment");
         btnClearFields = new JButton("Clear Fields");
         btnExitAppointments = new JButton("Exit");
 
-        // Style buttons
-        Color buttonColor = new Color(100, 149, 237); // Lighter blue
+        Color buttonColor = new Color(100, 149, 237);
         Font buttonFont = new Font("Arial", Font.BOLD, 14);
-        for (JButton btn : new JButton[]{btnBookAppointment, btnUpdateAppiontement1, BtnCancelAppiontment, btnClearFields, btnExitAppointments}) {
+        for (JButton btn : new JButton[]{btnBookAppointment, btnUpdateAppointment1, btnCancelAppointment, btnClearFields, btnExitAppointments}) {
             btn.setBackground(buttonColor);
             btn.setForeground(Color.WHITE);
             btn.setFont(buttonFont);
@@ -227,9 +226,9 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addGroup(appLayout.createSequentialGroup()
                                                 .addComponent(btnBookAppointment)
                                                 .addGap(10)
-                                                .addComponent(btnUpdateAppiontement1)
+                                                .addComponent(btnUpdateAppointment1)
                                                 .addGap(10)
-                                                .addComponent(BtnCancelAppiontment))
+                                                .addComponent(btnCancelAppointment))
                                         .addGroup(appLayout.createSequentialGroup()
                                                 .addGap(240)
                                                 .addComponent(btnClearFields)
@@ -266,8 +265,8 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addGap(15)
                                 .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnBookAppointment)
-                                        .addComponent(btnUpdateAppiontement1)
-                                        .addComponent(BtnCancelAppiontment))
+                                        .addComponent(btnUpdateAppointment1)
+                                        .addComponent(btnCancelAppointment))
                                 .addGap(15)
                                 .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnClearFields)
@@ -284,10 +283,9 @@ public class MainDashboard extends javax.swing.JFrame {
         txtCounselorEmail = new JTextField();
         labCounselorEmail = new JLabel("Email:");
         labAvailability = new JLabel("Availability:");
-        comboCounselor = new JComboBox<>(new String[]{"John Doe", "Jane Smith", "Alex Brown"}); // Placeholder for database
+        comboCounselor = new JComboBox<>(new String[]{"John Doe", "Jane Smith", "Alex Brown"});
         jComboBox1 = new JComboBox<>(new String[]{"Available", "Not Available"});
 
-        // Set white text and consistent font for labels
         labCounselor.setForeground(Color.WHITE);
         labCounselor.setFont(labelFont);
         labSpecialization.setForeground(Color.WHITE);
@@ -311,13 +309,12 @@ public class MainDashboard extends javax.swing.JFrame {
 
         btnAddCounselor = new JButton("Add Counselor");
         btnUpdateCounselor = new JButton("Update Counselor");
-        brnRemoveCounselor = new JButton("Remove Counselor");
-        btnViewAllCouselor = new JButton("View All");
+        btnRemoveCounselor = new JButton("Remove Counselor");
+        btnViewAllCounselors = new JButton("View All");
         btnClearCounselor = new JButton("Clear");
         btnExitCounselor = new JButton("Exit");
 
-        // Style buttons
-        for (JButton btn : new JButton[]{btnAddCounselor, btnUpdateCounselor, brnRemoveCounselor, btnViewAllCouselor, btnClearCounselor, btnExitCounselor}) {
+        for (JButton btn : new JButton[]{btnAddCounselor, btnUpdateCounselor, btnRemoveCounselor, btnViewAllCounselors, btnClearCounselor, btnExitCounselor}) {
             btn.setBackground(buttonColor);
             btn.setForeground(Color.WHITE);
             btn.setFont(buttonFont);
@@ -348,9 +345,9 @@ public class MainDashboard extends javax.swing.JFrame {
                                                 .addGap(10)
                                                 .addComponent(btnUpdateCounselor)
                                                 .addGap(10)
-                                                .addComponent(brnRemoveCounselor))
+                                                .addComponent(btnRemoveCounselor))
                                         .addGroup(cLayout.createSequentialGroup()
-                                                .addComponent(btnViewAllCouselor)
+                                                .addComponent(btnViewAllCounselors)
                                                 .addGap(10)
                                                 .addComponent(btnClearCounselor)
                                                 .addGap(10)
@@ -383,10 +380,10 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnAddCounselor)
                                         .addComponent(btnUpdateCounselor)
-                                        .addComponent(brnRemoveCounselor))
+                                        .addComponent(btnRemoveCounselor))
                                 .addGap(15)
                                 .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnViewAllCouselor)
+                                        .addComponent(btnViewAllCounselors)
                                         .addComponent(btnClearCounselor)
                                         .addComponent(btnExitCounselor))
                                 .addContainerGap(20, Short.MAX_VALUE))
@@ -400,7 +397,6 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel8 = new JLabel("Student Number:");
         jLabel9 = new JLabel("Submission Date:");
 
-        // Set white text and consistent font for labels
         jLabel6.setForeground(Color.WHITE);
         jLabel6.setFont(labelFont);
         jLabel7.setForeground(Color.WHITE);
@@ -423,12 +419,11 @@ public class MainDashboard extends javax.swing.JFrame {
         jScrollPane3 = new JScrollPane(jTextArea1);
 
         btnSubmitFeedback = new JButton("Submit");
-        BtnEditFeedback = new JButton("Edit");
+        btnEditFeedback = new JButton("Edit");
         btnDeleteFeedback = new JButton("Delete");
-        BtnViewFeedback = new JButton("View All");
+        btnViewFeedback = new JButton("View All");
 
-        // Style buttons
-        for (JButton btn : new JButton[]{btnSubmitFeedback, BtnEditFeedback, btnDeleteFeedback, BtnViewFeedback}) {
+        for (JButton btn : new JButton[]{btnSubmitFeedback, btnEditFeedback, btnDeleteFeedback, btnViewFeedback}) {
             btn.setBackground(buttonColor);
             btn.setForeground(Color.WHITE);
             btn.setFont(buttonFont);
@@ -454,11 +449,11 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addGroup(fLayout.createSequentialGroup()
                                                 .addComponent(btnSubmitFeedback)
                                                 .addGap(10)
-                                                .addComponent(BtnEditFeedback)
+                                                .addComponent(btnEditFeedback)
                                                 .addGap(10)
                                                 .addComponent(btnDeleteFeedback)
                                                 .addGap(10)
-                                                .addComponent(BtnViewFeedback)))
+                                                .addComponent(btnViewFeedback)))
                                 .addContainerGap(20, Short.MAX_VALUE))
         );
         fLayout.setVerticalGroup(
@@ -483,16 +478,15 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addGap(15)
                                 .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnSubmitFeedback)
-                                        .addComponent(BtnEditFeedback)
+                                        .addComponent(btnEditFeedback)
                                         .addComponent(btnDeleteFeedback)
-                                        .addComponent(BtnViewFeedback))
+                                        .addComponent(btnViewFeedback))
                                 .addContainerGap(20, Short.MAX_VALUE))
         );
         jTabbedPane2.addTab("Feedback", panelFeedback);
 
         getContentPane().add(jTabbedPane2);
 
-        // === Apply Dark Blue Background and Styling ===
         Color darkBlue = new Color(0, 51, 102);
         jDesktopPane1.setBackground(darkBlue);
         panelCounselors.setBackground(darkBlue);
@@ -516,9 +510,9 @@ public class MainDashboard extends javax.swing.JFrame {
     private JTable jTable1, jTable2;
     private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3;
     private JTextArea jTextArea1;
-    private JButton BtnCancelAppiontment, btnBookAppointment, btnUpdateAppiontement1, btnClearFields, btnExitAppointments;
-    private JButton btnAddCounselor, btnUpdateCounselor, brnRemoveCounselor, btnViewAllCouselor, btnClearCounselor, btnExitCounselor;
-    private JButton btnSubmitFeedback, BtnEditFeedback, btnDeleteFeedback, BtnViewFeedback;
+    private JButton btnCancelAppointment, btnBookAppointment, btnUpdateAppointment1, btnClearFields, btnExitAppointments;
+    private JButton btnAddCounselor, btnUpdateCounselor, btnRemoveCounselor, btnViewAllCounselors, btnClearCounselor, btnExitCounselor;
+    private JButton btnSubmitFeedback, btnEditFeedback, btnDeleteFeedback, btnViewFeedback;
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> new MainDashboard().setVisible(true));
