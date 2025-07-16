@@ -1,4 +1,4 @@
-package com.studentWellness.logic;
+package com.studentWellness.gui;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

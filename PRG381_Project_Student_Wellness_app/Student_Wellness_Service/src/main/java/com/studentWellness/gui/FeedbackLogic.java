@@ -1,4 +1,4 @@
-package com.studentWellness.logic;
+package com.studentWellness.gui;
 
 import java.io.*;
 import java.util.ArrayList;
