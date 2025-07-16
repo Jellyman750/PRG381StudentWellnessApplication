@@ -1,6 +1,0 @@
-Servlets\RegisterServlet.class
-com\mycompany\student_wellness_service\User.class
-Servlets\LoginServlet.class
-com\mycompany\student_wellness_service\DBUtil.class
-com\mycompany\student_wellness_service\UserAuthentication.class
-Servlets\LogoutServlet.class
