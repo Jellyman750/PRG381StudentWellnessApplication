@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="derbytools">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Milestone2/BCWellness_Management_System/src/lib/derbytools.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

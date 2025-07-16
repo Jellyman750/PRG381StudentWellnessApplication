@@ -4,27 +4,65 @@
  */
 package gui;
 
+import database.DBConnection;
+import model.Appointment;
+import model.Counselor;
+import model.Feedback;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+
+import java.util.Properties;
+
+import org.jdatepicker.impl.JDatePanelImpl;
+import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.UtilDateModel;
+
+
+
+
 
 public class MainDashboard extends javax.swing.JFrame {
 
     private final AppointmentLogic appointmentManager = new AppointmentLogic();
     private final CounselorLogic counselorManager = new CounselorLogic();
     private final FeedbackLogic feedbackManager = new FeedbackLogic();
+    private final DBConnection db = new DBConnection();
 
     public MainDashboard() {
         initComponents();
+        try {
+            db.connect();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
+        }
         addActionListeners();
-        viewAppointments();
-        viewAllCounselors();
-        viewFeedback();
+
     }
 
     private void addActionListeners() {
         // Appointments
-        btnBookAppointment.addActionListener(e -> bookAppointment());
+        btnBookAppointment.addActionListener(e -> {
+            int studentNumber = Integer.parseInt(txtStudentName.getText());
+            int counselorID = Integer.parseInt(txtCounselorName.getText());
+            java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+            if (selectedDate == null) {
+                JOptionPane.showMessageDialog(this, "Please select a date.");
+                return;
+            }
+            java.sql.Date date = new java.sql.Date(selectedDate.getTime());
+
+            java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
+            java.sql.Time time = new java.sql.Time(selectedTime.getTime());
+
+            String status = comboBoxStatus.getSelectedItem().toString();
+
+            db.insertAppointment(studentNumber, counselorID, date, time, status);
+            JOptionPane.showMessageDialog(this, "Appointment booked successfully.");
+        });
+
         btnUpdateAppointment1.addActionListener(e -> updateAppointment());
         btnCancelAppointment.addActionListener(e -> cancelAppointment());
         btnClearFields.addActionListener(e -> clearAppointmentFields());
@@ -48,21 +86,30 @@ public class MainDashboard extends javax.swing.JFrame {
     // Dummy methods for UI
     private void bookAppointment() {
         if (txtStudentName.getText().isEmpty() || txtCounselorName.getText().isEmpty() ||
-                txtDate.getText().isEmpty() || txtTime.getText().isEmpty()) {
+                datePicker.getModel().getValue() == null || timeSpinner.getValue() == null) {
             JOptionPane.showMessageDialog(this, "Please fill in all appointment details.");
             return;
         }
+
+        java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+        java.sql.Date sqlDate = new java.sql.Date(selectedDate.getTime());
+
+        java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
+        java.sql.Time sqlTime = new java.sql.Time(selectedTime.getTime());
+
         DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
         model.addRow(new Object[]{
                 txtStudentName.getText(),
                 txtCounselorName.getText(),
-                txtDate.getText(),
-                txtTime.getText(),
+                sqlDate.toString(),
+                sqlTime.toString(),
                 comboBoxStatus.getSelectedItem().toString()
         });
+
         JOptionPane.showMessageDialog(this, "Appointment booked (dummy data).");
         clearAppointmentFields();
     }
+
 
     private void updateAppointment() {
         JOptionPane.showMessageDialog(this, "Update Appointment clicked (logic to be added).");
@@ -75,8 +122,8 @@ public class MainDashboard extends javax.swing.JFrame {
     private void clearAppointmentFields() {
         txtStudentName.setText("");
         txtCounselorName.setText("");
-        txtDate.setText("");
-        txtTime.setText("");
+        datePicker.getModel().setValue(null);
+        timeSpinner.setValue(new java.util.Date());
         comboBoxStatus.setSelectedIndex(0);
     }
 
@@ -170,12 +217,27 @@ public class MainDashboard extends javax.swing.JFrame {
 
         txtStudentName = new JTextField();
         txtCounselorName = new JTextField();
-        txtDate = new JTextField();
-        txtTime = new JTextField();
+        UtilDateModel model = new UtilDateModel();
+        Properties p = new Properties();
+        p.put("text.today", "Today");
+        p.put("text.month", "Month");
+        p.put("text.year", "Year");
+        JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
+        datePicker = new JDatePickerImpl(datePanel, new org.jdatepicker.impl.DateComponentFormatter());
+
+        SpinnerDateModel timeModel = new SpinnerDateModel();
+        timeSpinner = new JSpinner(timeModel);
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "HH:mm");
+        timeSpinner.setEditor(timeEditor);
+
+        Dimension fieldSize = new Dimension(160, 30);
+
         txtStudentName.setFont(new Font("Arial", Font.PLAIN, 14));
         txtCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtDate.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtTime.setFont(new Font("Arial", Font.PLAIN, 14));
+        datePicker.setFont(new Font("Arial", Font.PLAIN, 14));
+        timeSpinner.setFont(new Font("Arial", Font.PLAIN, 14));
+
+
 
         comboBoxStatus = new JComboBox<>(new String[]{"Scheduled", "Cancelled", "Completed"});
         comboBoxStatus.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -203,6 +265,18 @@ public class MainDashboard extends javax.swing.JFrame {
             btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         }
 
+        JPanel datePanelWrapper = new JPanel();
+        datePanelWrapper.setLayout(new BoxLayout(datePanelWrapper, BoxLayout.Y_AXIS));
+        datePanelWrapper.add(datePicker);
+        datePanelWrapper.setPreferredSize(new Dimension(160, 30));
+
+        timeSpinner.setPreferredSize(new Dimension(160, 30));
+        JPanel timePanelWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        timePanelWrapper.add(timeSpinner);
+        timePanelWrapper.setPreferredSize(new Dimension(160, 30));
+
+
+
         GroupLayout appLayout = new GroupLayout(jDesktopPane1);
         jDesktopPane1.setLayout(appLayout);
         appLayout.setHorizontalGroup(
@@ -215,9 +289,9 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addComponent(jLabel2)
                                         .addComponent(txtCounselorName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel3)
-                                        .addComponent(txtDate, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel4)
-                                        .addComponent(txtTime, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel5)
                                         .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
                                 .addGap(20)
@@ -252,11 +326,11 @@ public class MainDashboard extends javax.swing.JFrame {
                                                 .addGap(10)
                                                 .addComponent(jLabel3)
                                                 .addGap(6)
-                                                .addComponent(txtDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(jLabel4)
                                                 .addGap(6)
-                                                .addComponent(txtTime, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(jLabel5)
                                                 .addGap(6)
@@ -505,7 +579,9 @@ public class MainDashboard extends javax.swing.JFrame {
     private JDesktopPane jDesktopPane1;
     private JPanel panelCounselors, panelFeedback;
     private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, labCounselor, labSpecialization, labCounselorEmail, labAvailability;
-    private JTextField txtStudentName, txtCounselorName, txtDate, txtTime, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate;
+    private JTextField txtStudentName, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate;
+    private JDatePickerImpl datePicker;
+    private JSpinner timeSpinner;
     private JComboBox<String> comboBoxStatus, comboCounselor, jComboBox1, jComboBox2;
     private JTable jTable1, jTable2;
     private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3;
