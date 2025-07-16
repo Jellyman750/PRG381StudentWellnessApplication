@@ -12,8 +12,7 @@ import model.Feedback;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-
-import java.util.Properties;
+import java.util.*;
 
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
@@ -128,21 +127,40 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void addCounselor() {
-        if (comboCounselor.getSelectedItem() == null || txtCounselorEmail.getText().isEmpty() ||
+        if (comboCounselor.getSelectedItem() == null ||
+                txtCounselorEmail.getText().isEmpty() ||
                 txtSpecialization.getText().isEmpty()) {
+
             JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
             return;
         }
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.addRow(new Object[]{
-                comboCounselor.getSelectedItem().toString(),
-                txtSpecialization.getText(),
-                txtCounselorEmail.getText(),
-                jComboBox1.getSelectedItem().toString()
-        });
-        JOptionPane.showMessageDialog(this, "Counselor added (dummy data).");
-        clearCounselorFields();
+
+        String name = comboCounselor.getSelectedItem().toString();
+        String[] parts = name.split(" ", 2);
+        String firstName = parts[0];
+        String surname = (parts.length > 1) ? parts[1] : "";
+        String email = txtCounselorEmail.getText();
+        String specialisation = txtSpecialization.getText();
+        boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
+
+        boolean success = CounselorLogic.addCounselorToDatabase(firstName, surname, email, specialisation, availability);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Counselor added successfully.");
+            // Optionally add it to the table for immediate feedback:
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            model.addRow(new Object[]{
+                    name,
+                    specialisation,
+                    email,
+                    availability ? "Available" : "Not Available"
+            });
+            clearCounselorFields();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error adding counselor.");
+        }
     }
+
 
     private void updateCounselor() {
         JOptionPane.showMessageDialog(this, "Update Counselor clicked (logic to be added).");
@@ -153,8 +171,29 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void viewAllCounselors() {
-        JOptionPane.showMessageDialog(this, "View All Counselors clicked (logic to be added).");
+        try {
+            ArrayList<Counselor> counselors = db.viewCounselor();
+
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            model.setRowCount(0); // Clear table
+
+            for (Counselor c : counselors) {
+                model.addRow(new Object[]{
+                        c.getName() + " " + c.getSurname(),
+                        c.getSpecialization(),
+                        c.getEmail(),
+                        c.isAvailable() ? "Available" : "Not Available"
+                });
+            }
+
+            JOptionPane.showMessageDialog(this, "Counselor list loaded.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading counselors: " + e.getMessage());
+        }
     }
+
+
 
     private void clearCounselorFields() {
         comboCounselor.setSelectedIndex(-1);

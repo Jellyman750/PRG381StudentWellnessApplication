@@ -1,8 +1,12 @@
 
 package gui;
 
+import database.DBConnection;
 import java.io.*;
 import java.util.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 public class CounselorLogic {
     private static final String COUNSELOR_FILE = "data/counselors.txt";
@@ -88,6 +92,20 @@ public class CounselorLogic {
             }
             return true;
         } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean addCounselorToDatabase(String name, String surname, String email, String specialisation, boolean availability) {
+        try {
+            DBConnection db = new DBConnection();
+            db.connect();
+            db.insertCounselor(name, surname, email, specialisation, availability);
+            db.disconnect();
+            return true;
+
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
