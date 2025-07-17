@@ -31,7 +31,10 @@ public class MainDashboard extends javax.swing.JFrame {
     private final CounselorLogic counselorManager = new CounselorLogic();
     private final FeedbackLogic feedbackManager = new FeedbackLogic();
     private final DBConnection db = new DBConnection();
-    
+
+    private ArrayList<Counselor> counselorList = new ArrayList<>();
+
+
     //create dao objects
     AppointmentDAO appointmentDAO= new AppointmentDAO(db);
     CounselorDAO counselorDAO = new CounselorDAO(db);
@@ -60,7 +63,7 @@ public class MainDashboard extends javax.swing.JFrame {
             if (selectedTitle.equals("Appointments")) {
                 loadScheduledAppointments();
             } else if (selectedTitle.equals("Counselors")) {
-                loadCounselorsToTable();
+                viewAllCounselors();
             }
         });
 
@@ -164,6 +167,10 @@ public class MainDashboard extends javax.swing.JFrame {
         });
     }
 
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        return email.matches(emailRegex);
+    }
 
 
     // Dummy methods for UI
@@ -233,6 +240,14 @@ public class MainDashboard extends javax.swing.JFrame {
             return;
         }
 
+        String email = txtCounselorEmail.getText().trim();
+
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.");
+            return;
+        }
+
+
         String nameInput = txtCounselorNameInput.getText().trim();
         String[] parts = nameInput.split(" ", 2);
         String firstName = parts[0];
@@ -241,18 +256,12 @@ public class MainDashboard extends javax.swing.JFrame {
         String specialisation = txtSpecialization.getText();
         boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
 
-        boolean success = CounselorLogic.addCounselorToDatabase(firstName, surname, email, specialisation, availability);
+        // Use CounselorDAO directly
+        boolean success = counselorDAO.insertCounselor(firstName, surname, email, specialisation, availability);
 
         if (success) {
             JOptionPane.showMessageDialog(this, "Counselor added successfully.");
-            // Optionally add it to the table for immediate feedback:
-            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            model.addRow(new Object[]{
-                    nameInput,
-                    specialisation,
-                    email,
-                    availability ? "Available" : "Not Available"
-            });
+            viewAllCounselors(); // Refresh table
             clearCounselorFields();
         } else {
             JOptionPane.showMessageDialog(this, "Error adding counselor.");
@@ -260,22 +269,95 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
 
+
     private void updateCounselor() {
-        JOptionPane.showMessageDialog(this, "Update Counselor clicked (logic to be added).");
+        int selectedRow = jTable1.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a counselor to update.");
+            return;
+        }
+
+        if (txtCounselorNameInput.getText().trim().isEmpty() ||
+                txtCounselorEmail.getText().trim().isEmpty() ||
+                txtSpecialization.getText().trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
+            return;
+        }
+
+        String email = txtCounselorEmail.getText().trim();
+
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.");
+            return;
+        }
+
+
+        // Get the selected Counselor object from the list
+        Counselor selectedCounselor = counselorList.get(selectedRow);
+        int counselorID = selectedCounselor.getCounselorID();
+
+        String nameInput = txtCounselorNameInput.getText().trim();
+        String[] parts = nameInput.split(" ", 2);
+        String firstName = parts[0];
+        String surname = (parts.length > 1) ? parts[1] : "";
+        String email = txtCounselorEmail.getText();
+        String specialisation = txtSpecialization.getText();
+        boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
+
+        boolean success = counselorDAO.updateCounselor(counselorID, firstName, surname, email, specialisation, availability);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Counselor updated successfully.");
+            viewAllCounselors(); // Refresh the table and list
+            clearCounselorFields();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error updating counselor.");
+        }
     }
 
+
     private void removeCounselor() {
-        JOptionPane.showMessageDialog(this, "Remove Counselor clicked (logic to be added).");
+        int selectedRow = jTable1.getSelectedRow();
+
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a counselor to remove.");
+            return;
+        }
+
+        // Confirm deletion
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to remove this counselor?",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        // Get counselorID from the list
+        Counselor selectedCounselor = counselorList.get(selectedRow);
+        int counselorID = selectedCounselor.getCounselorID();
+
+        boolean success = counselorDAO.deleteCounselor(counselorID);
+
+        if (success) {
+            JOptionPane.showMessageDialog(this, "Counselor removed successfully.");
+            viewAllCounselors(); // Refresh table and list
+        } else {
+            JOptionPane.showMessageDialog(this, "Error removing counselor.");
+        }
     }
+
 
     private void viewAllCounselors() {
         try {
-            ArrayList<Counselor> counselors = counselorDAO.viewCounselor();
+            counselorList = counselorDAO.viewCounselor(); // Load counselors from DB
 
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             model.setRowCount(0); // Clear table
 
-            for (Counselor c : counselors) {
+            for (Counselor c : counselorList) {
                 model.addRow(new Object[]{
                         c.getName() + " " + c.getSurname(),
                         c.getSpecialization(),
@@ -284,7 +366,6 @@ public class MainDashboard extends javax.swing.JFrame {
                 });
             }
 
-            JOptionPane.showMessageDialog(this, "Counselor list loaded.");
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error loading counselors: " + e.getMessage());
@@ -293,8 +374,9 @@ public class MainDashboard extends javax.swing.JFrame {
 
 
 
+
     private void clearCounselorFields() {
-        txtCounselorName.setText("");
+        txtCounselorNameInput.setText("");  // ✅ Correct field
         txtSpecialization.setText("");
         txtCounselorEmail.setText("");
         jComboBox1.setSelectedIndex(0);
