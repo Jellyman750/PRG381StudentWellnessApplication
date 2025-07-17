@@ -2,8 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package gui;
+package view;
 
+import controller.AppointmentLogic;
+import controller.CounselorLogic;
+import controller.FeedbackLogic;
 import database.AppointmentDAO;
 import database.CounselorDAO;
 import database.DBConnection;
@@ -28,7 +31,7 @@ import org.jdatepicker.impl.UtilDateModel;
 public class MainDashboard extends javax.swing.JFrame {
 
     private final AppointmentLogic appointmentManager = new AppointmentLogic();
-    private final CounselorLogic counselorManager = new CounselorLogic();
+    private final CounselorLogic counselorManager;
     private final FeedbackLogic feedbackManager = new FeedbackLogic();
     private final DBConnection db = new DBConnection();
 
@@ -36,22 +39,30 @@ public class MainDashboard extends javax.swing.JFrame {
 
 
     //create dao objects
-    AppointmentDAO appointmentDAO= new AppointmentDAO(db);
-    CounselorDAO counselorDAO = new CounselorDAO(db);
-    FeedbackDAO feedbackDAO = new FeedbackDAO(db);
+    AppointmentDAO appointmentDAO;
+    CounselorDAO counselorDAO;
+    FeedbackDAO feedbackDAO;
 
     public MainDashboard() {
         initComponents();
+
+        appointmentDAO = new AppointmentDAO(db);
+        counselorDAO = new CounselorDAO(db);
+        feedbackDAO = new FeedbackDAO(db);
+
+        counselorManager = new CounselorLogic(counselorDAO, feedbackDAO);
+
+
         try {
             db.connect();
             counselorDAO.createCounselor();
             appointmentDAO.createAppointment();
             feedbackDAO.createFeedback();
-
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
         }
+
         addActionListeners();
         addCounselorTableClickListener();
         loadScheduledAppointments();
@@ -66,9 +77,8 @@ public class MainDashboard extends javax.swing.JFrame {
                 viewAllCounselors();
             }
         });
-
-
     }
+
 
     private void addActionListeners() {
         // Appointments
@@ -232,45 +242,22 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void addCounselor() {
-        if (txtCounselorNameInput.getText().trim().isEmpty() ||
-                txtCounselorEmail.getText().trim().isEmpty() ||
-                txtSpecialization.getText().trim().isEmpty()) {
-
-            JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
-            return;
-        }
-
-        String email = txtCounselorEmail.getText().trim();
-
-        if (!isValidEmail(email)) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid email address.");
-            return;
-        }
-
-
         String nameInput = txtCounselorNameInput.getText().trim();
-        String[] parts = nameInput.split(" ", 2);
-        String firstName = parts[0];
-        String surname = (parts.length > 1) ? parts[1] : "";
-        String specialisation = txtSpecialization.getText();
-        boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
+        String email = txtCounselorEmail.getText().trim();
+        String specialization = txtSpecialization.getText().trim();
+        String availability = jComboBox1.getSelectedItem().toString();
 
-        if (counselorDAO.counselorExists(firstName, surname, email)) {
-            JOptionPane.showMessageDialog(this, "A counselor with the same name or email already exists.");
-            return;
-        }
+        String result = counselorManager.addCounselor(nameInput, email, specialization, availability);
 
-        // Use CounselorDAO directly
-        boolean success = counselorDAO.insertCounselor(firstName, surname, email, specialisation, availability);
-
-        if (success) {
+        if (result.equals("SUCCESS")) {
             JOptionPane.showMessageDialog(this, "Counselor added successfully.");
-            viewAllCounselors(); // Refresh table
+            viewAllCounselors();
             clearCounselorFields();
         } else {
-            JOptionPane.showMessageDialog(this, "Error adding counselor.");
+            JOptionPane.showMessageDialog(this, result);
         }
     }
+
 
 
 
@@ -282,44 +269,25 @@ public class MainDashboard extends javax.swing.JFrame {
             return;
         }
 
-        if (txtCounselorNameInput.getText().trim().isEmpty() ||
-                txtCounselorEmail.getText().trim().isEmpty() ||
-                txtSpecialization.getText().trim().isEmpty()) {
-
-            JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
-            return;
-        }
-
-        String email = txtCounselorEmail.getText().trim();
-
-        if (!isValidEmail(email)) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid email address.");
-            return;
-        }
-
-
-        // Get the selected Counselor object from the list
         Counselor selectedCounselor = counselorList.get(selectedRow);
         int counselorID = selectedCounselor.getCounselorID();
 
         String nameInput = txtCounselorNameInput.getText().trim();
-        String[] parts = nameInput.split(" ", 2);
-        String firstName = parts[0];
-        String surname = (parts.length > 1) ? parts[1] : "";
-        String specialisation = txtSpecialization.getText();
-        boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
+        String email = txtCounselorEmail.getText().trim();
+        String specialization = txtSpecialization.getText().trim();
+        String availability = jComboBox1.getSelectedItem().toString();
 
+        String result = counselorManager.updateCounselor(counselorID, nameInput, email, specialization, availability);
 
-        boolean success = counselorDAO.updateCounselor(counselorID, firstName, surname, email, specialisation, availability);
-
-        if (success) {
+        if (result.equals("SUCCESS")) {
             JOptionPane.showMessageDialog(this, "Counselor updated successfully.");
-            viewAllCounselors(); // Refresh the table and list
+            viewAllCounselors();
             clearCounselorFields();
         } else {
-            JOptionPane.showMessageDialog(this, "Error updating counselor.");
+            JOptionPane.showMessageDialog(this, result);
         }
     }
+
 
 
     private void removeCounselor() {
@@ -333,50 +301,12 @@ public class MainDashboard extends javax.swing.JFrame {
         Counselor selectedCounselor = counselorList.get(selectedRow);
         int counselorID = selectedCounselor.getCounselorID();
 
-        // Load related data from DAO
-        ArrayList<Appointment> appointments = counselorDAO.getAppointmentsByCounselor(counselorID);
-        ArrayList<Feedback> feedbacks = feedbackDAO.getFeedbackByCounselor(counselorID);
+        String message = counselorManager.getCounselorRelatedDataMessage(counselorID);
 
-        // Build message
-        StringBuilder message = new StringBuilder("This counselor has related data:\n\n");
-
-        if (!appointments.isEmpty()) {
-            message.append("Appointments:\n");
-            for (Appointment app : appointments) {
-                message.append("- ")
-                        .append(app.getAppointmentDate())
-                        .append(" at ")
-                        .append(app.getAppointmentTime())
-                        .append(", Student: ")
-                        .append(app.getStudentNumber())
-                        .append(", Status: ")
-                        .append(app.getStatus())
-                        .append("\n");
-            }
-        }
-
-        if (!feedbacks.isEmpty()) {
-            message.append("\nFeedback:\n");
-            for (Feedback fb : feedbacks) {
-                message.append("- Student: ")
-                        .append(fb.getStudentNumber())
-                        .append(", Comment: ")
-                        .append(fb.getComments())
-                        .append("\n");
-            }
-        }
-
-        message.append("\nDo you want to delete the counselor and all related data?");
-
-
-        // Confirm with user
-        int confirm = JOptionPane.showConfirmDialog(this, message.toString(),
-                "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, message, "Confirm Deletion", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            feedbackDAO.deleteFeedbackByCounselor(counselorID);
-            counselorDAO.deleteAppointmentsByCounselor(counselorID);
-            boolean success = counselorDAO.deleteCounselor(counselorID);
+            boolean success = counselorManager.deleteCounselorAndRelatedData(counselorID);
 
             if (success) {
                 JOptionPane.showMessageDialog(this, "Counselor and all related data deleted.");
