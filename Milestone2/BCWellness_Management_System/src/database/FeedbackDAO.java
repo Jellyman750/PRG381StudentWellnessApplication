@@ -164,11 +164,56 @@ public class FeedbackDAO {
                 int rating = result.getInt("rating");
                 String comments = result.getString("comments");
                 Date submissionDate = result.getDate("submission_date");
-                allFeedback.add(new Feedback(feedbackID, appointmentID, Integer.parseInt(studentNumber), rating, comments, submissionDate));
+                allFeedback.add(new Feedback(feedbackID, appointmentID, studentNumber, rating, comments, submissionDate));
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         return allFeedback;
     }
+
+    public ArrayList<Feedback> getFeedbackByCounselor(int counselorID) {
+        ArrayList<Feedback> feedbacks = new ArrayList<>();
+        try {
+            String sql = "SELECT F.feedbackID, F.appointmentID, F.studentNumber, F.rating, F.comments, F.submission_date " +
+                    "FROM Feedback F " +
+                    "WHERE F.appointmentID IN (SELECT appointmentID FROM Appointment WHERE counselorID = ?)";
+
+            PreparedStatement ps = dbConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, counselorID);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                feedbacks.add(new Feedback(
+                        rs.getInt("feedbackID"),
+                        rs.getInt("appointmentID"),
+                        rs.getString("studentNumber"),
+                        rs.getInt("rating"),
+                        rs.getString("comments"),
+                        rs.getDate("submission_date")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return feedbacks;
+    }
+
+
+
+
+
+    public void deleteFeedbackByCounselor(int counselorID) {
+        String sql = "DELETE FROM Feedback " +
+                "WHERE appointmentID IN (SELECT appointmentID FROM Appointment WHERE counselorID = ?)";
+        try (PreparedStatement ps = dbConnection.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, counselorID);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
 }

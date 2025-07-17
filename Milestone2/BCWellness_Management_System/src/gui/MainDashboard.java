@@ -252,9 +252,13 @@ public class MainDashboard extends javax.swing.JFrame {
         String[] parts = nameInput.split(" ", 2);
         String firstName = parts[0];
         String surname = (parts.length > 1) ? parts[1] : "";
-        String email = txtCounselorEmail.getText();
         String specialisation = txtSpecialization.getText();
         boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
+
+        if (counselorDAO.counselorExists(firstName, surname, email)) {
+            JOptionPane.showMessageDialog(this, "A counselor with the same name or email already exists.");
+            return;
+        }
 
         // Use CounselorDAO directly
         boolean success = counselorDAO.insertCounselor(firstName, surname, email, specialisation, availability);
@@ -302,9 +306,9 @@ public class MainDashboard extends javax.swing.JFrame {
         String[] parts = nameInput.split(" ", 2);
         String firstName = parts[0];
         String surname = (parts.length > 1) ? parts[1] : "";
-        String email = txtCounselorEmail.getText();
         String specialisation = txtSpecialization.getText();
         boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
+
 
         boolean success = counselorDAO.updateCounselor(counselorID, firstName, surname, email, specialisation, availability);
 
@@ -326,28 +330,63 @@ public class MainDashboard extends javax.swing.JFrame {
             return;
         }
 
-        // Confirm deletion
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to remove this counselor?",
-                "Confirm Delete", JOptionPane.YES_NO_OPTION);
-
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        // Get counselorID from the list
         Counselor selectedCounselor = counselorList.get(selectedRow);
         int counselorID = selectedCounselor.getCounselorID();
 
-        boolean success = counselorDAO.deleteCounselor(counselorID);
+        // Load related data from DAO
+        ArrayList<Appointment> appointments = counselorDAO.getAppointmentsByCounselor(counselorID);
+        ArrayList<Feedback> feedbacks = feedbackDAO.getFeedbackByCounselor(counselorID);
 
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Counselor removed successfully.");
-            viewAllCounselors(); // Refresh table and list
-        } else {
-            JOptionPane.showMessageDialog(this, "Error removing counselor.");
+        // Build message
+        StringBuilder message = new StringBuilder("This counselor has related data:\n\n");
+
+        if (!appointments.isEmpty()) {
+            message.append("Appointments:\n");
+            for (Appointment app : appointments) {
+                message.append("- ")
+                        .append(app.getAppointmentDate())
+                        .append(" at ")
+                        .append(app.getAppointmentTime())
+                        .append(", Student: ")
+                        .append(app.getStudentNumber())
+                        .append(", Status: ")
+                        .append(app.getStatus())
+                        .append("\n");
+            }
+        }
+
+        if (!feedbacks.isEmpty()) {
+            message.append("\nFeedback:\n");
+            for (Feedback fb : feedbacks) {
+                message.append("- Student: ")
+                        .append(fb.getStudentNumber())
+                        .append(", Comment: ")
+                        .append(fb.getComments())
+                        .append("\n");
+            }
+        }
+
+        message.append("\nDo you want to delete the counselor and all related data?");
+
+
+        // Confirm with user
+        int confirm = JOptionPane.showConfirmDialog(this, message.toString(),
+                "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            feedbackDAO.deleteFeedbackByCounselor(counselorID);
+            counselorDAO.deleteAppointmentsByCounselor(counselorID);
+            boolean success = counselorDAO.deleteCounselor(counselorID);
+
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Counselor and all related data deleted.");
+                viewAllCounselors();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error deleting counselor.");
+            }
         }
     }
+
 
 
     private void viewAllCounselors() {
@@ -406,6 +445,28 @@ public class MainDashboard extends javax.swing.JFrame {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?", "Exit", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             System.exit(0);
+        }
+    }
+
+    private void filterCounselorTable() {
+        String searchText = txtSearchCounselor.getText().trim().toLowerCase();
+
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0); // Clear table
+
+        for (Counselor c : counselorList) {
+            String fullName = (c.getName() + " " + c.getSurname()).toLowerCase();
+            String specialization = c.getSpecialization().toLowerCase();
+            String email = c.getEmail().toLowerCase();
+
+            if (fullName.contains(searchText) || specialization.contains(searchText) || email.contains(searchText)) {
+                model.addRow(new Object[]{
+                        c.getName() + " " + c.getSurname(),
+                        c.getSpecialization(),
+                        c.getEmail(),
+                        c.isAvailable() ? "Available" : "Not Available"
+                });
+            }
         }
     }
 
@@ -580,6 +641,14 @@ public class MainDashboard extends javax.swing.JFrame {
         txtCounselorNameInput.setFont(new Font("Arial", Font.PLAIN, 14));
         jComboBox1 = new JComboBox<>(new String[]{"Available", "Not Available"});
 
+        labSearchCounselor = new JLabel("Search:");
+        labSearchCounselor.setForeground(Color.WHITE);
+        labSearchCounselor.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        txtSearchCounselor = new JTextField();
+        txtSearchCounselor.setFont(new Font("Arial", Font.PLAIN, 14));
+
+
         labCounselor.setForeground(Color.WHITE);
         labCounselor.setFont(labelFont);
         labSpecialization.setForeground(Color.WHITE);
@@ -616,72 +685,102 @@ public class MainDashboard extends javax.swing.JFrame {
             btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         }
 
+        txtSearchCounselor.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                filterCounselorTable();
+            }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                filterCounselorTable();
+            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                filterCounselorTable();
+            }
+        });
+
+
         GroupLayout cLayout = new GroupLayout(panelCounselors);
         panelCounselors.setLayout(cLayout);
+
+        cLayout.setAutoCreateGaps(true);
+        cLayout.setAutoCreateContainerGaps(true);
+
         cLayout.setHorizontalGroup(
-                cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(cLayout.createSequentialGroup()
-                                .addGap(20)
-                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(labCounselor)
-                                        .addComponent(txtCounselorNameInput, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(labSpecialization)
-                                        .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(labCounselorEmail)
-                                        .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(labAvailability)
-                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
-                                .addGap(20)
-                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(cLayout.createSequentialGroup()
-                                                .addComponent(btnAddCounselor)
-                                                .addGap(10)
-                                                .addComponent(btnUpdateCounselor)
-                                                .addGap(10)
-                                                .addComponent(btnRemoveCounselor))
-                                        .addGroup(cLayout.createSequentialGroup()
-                                                .addComponent(btnViewAllCounselors)
-                                                .addGap(10)
-                                                .addComponent(btnClearCounselor)
-                                                .addGap(10)
-                                                .addComponent(btnExitCounselor)))
-                                .addContainerGap(20, Short.MAX_VALUE))
-        );
-        cLayout.setVerticalGroup(
-                cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(cLayout.createSequentialGroup()
-                                .addGap(20)
-                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(cLayout.createSequentialGroup()
-                                                .addComponent(labCounselor)
-                                                .addGap(6)
-                                                .addComponent(txtCounselorNameInput, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(labSpecialization)
-                                                .addGap(6)
-                                                .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(labCounselorEmail)
-                                                .addGap(6)
-                                                .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(labAvailability)
-                                                .addGap(6)
-                                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE))
-                                .addGap(15)
-                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                cLayout.createSequentialGroup()
+                        .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(labCounselor)
+                                .addComponent(txtCounselorNameInput, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(labSpecialization)
+                                .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(labCounselorEmail)
+                                .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(labAvailability)
+                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                        )
+                        .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(labSearchCounselor)
+                                .addComponent(txtSearchCounselor, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                                .addGroup(cLayout.createSequentialGroup()
                                         .addComponent(btnAddCounselor)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(btnUpdateCounselor)
-                                        .addComponent(btnRemoveCounselor))
-                                .addGap(15)
-                                .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(btnRemoveCounselor)
+                                )
+                                .addGroup(cLayout.createSequentialGroup()
                                         .addComponent(btnViewAllCounselors)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(btnClearCounselor)
-                                        .addComponent(btnExitCounselor))
-                                .addContainerGap(20, Short.MAX_VALUE))
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(btnExitCounselor)
+                                )
+                        )
         );
+
+        cLayout.setVerticalGroup(
+                cLayout.createSequentialGroup()
+                        .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(cLayout.createSequentialGroup()
+                                        .addComponent(labCounselor)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtCounselorNameInput, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(labSpecialization)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(labCounselorEmail)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(labAvailability)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                )
+                                .addGroup(cLayout.createSequentialGroup()
+                                        .addComponent(labSearchCounselor)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtSearchCounselor, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                .addComponent(btnAddCounselor)
+                                                .addComponent(btnUpdateCounselor)
+                                                .addComponent(btnRemoveCounselor)
+                                        )
+                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                                .addComponent(btnViewAllCounselors)
+                                                .addComponent(btnClearCounselor)
+                                                .addComponent(btnExitCounselor)
+                                        )
+                                )
+                        )
+        );
+
+
+
         jTabbedPane2.addTab("Counselors", panelCounselors);
 
         // === FEEDBACK TAB ===
@@ -798,8 +897,8 @@ public class MainDashboard extends javax.swing.JFrame {
     private JTabbedPane jTabbedPane2;
     private JDesktopPane jDesktopPane1;
     private JPanel panelCounselors, panelFeedback;
-    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, labCounselor, labSpecialization, labCounselorEmail, labAvailability;
-    private JTextField txtStudentName,txtCounselorNameInput, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate;
+    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, labCounselor, labSpecialization, labCounselorEmail, labAvailability,labSearchCounselor;
+    private JTextField txtStudentName,txtCounselorNameInput, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate,txtSearchCounselor;
     private JDatePickerImpl datePicker;
     private JSpinner timeSpinner;
     private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2;

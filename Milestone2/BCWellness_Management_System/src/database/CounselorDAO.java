@@ -6,6 +6,8 @@ package database;
 import model.Counselor;
 import java.sql.*;
 import java.util.ArrayList;
+
+import model.Appointment;
 /**
  *
  * @author tarina
@@ -150,6 +152,24 @@ public class CounselorDAO {
         }
     }
 
+    public boolean counselorExists(String name, String surname, String email) {
+        String query = "SELECT COUNT(*) FROM Counselor WHERE counselorName = ? AND counselorSurname = ? OR counselorEmail = ?";
+        try (PreparedStatement ps = dbConnection.getConnection().prepareStatement(query)) {
+            ps.setString(1, name);
+            ps.setString(2, surname);
+            ps.setString(3, email);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0; // Returns true if any match found
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return false;
+    }
+
+
     //Retrieves all counselors from the counselor table and return ArrayList of all Counselor objects
     public ArrayList<Counselor> viewCounselor() {
         ArrayList<Counselor> allCounselors = new ArrayList<>();
@@ -170,5 +190,45 @@ public class CounselorDAO {
         }
         return allCounselors;
     }
+    public ArrayList<Appointment> getAppointmentsByCounselor(int counselorID) {
+        ArrayList<Appointment> appointments = new ArrayList<>();
+        try {
+            String sql = "SELECT * FROM Appointment WHERE CounselorID = ?";
+            PreparedStatement ps = dbConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, counselorID);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                appointments.add(new Appointment(
+                        rs.getInt("AppointmentID"),
+                        rs.getInt("StudentNumber"),
+                        rs.getInt("CounselorID"),
+                        rs.getDate("AppointmentDate"),
+                        rs.getTime("AppointmentTime"),
+                        rs.getString("Status")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return appointments;
+    }
+
+    public void deleteAppointmentsByCounselor(int counselorID) {
+        try {
+            String sql = "DELETE FROM Appointment WHERE CounselorID = ?";
+            PreparedStatement ps = dbConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, counselorID);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+
 }
 
