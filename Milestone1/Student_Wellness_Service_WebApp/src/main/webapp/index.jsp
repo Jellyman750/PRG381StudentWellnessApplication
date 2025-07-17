@@ -100,11 +100,11 @@ h1 {
 
     <h1>Welcome to the Student Wellness Service</h1>
 
-    <form action="login.jsp" method="get">
+    <form action="${pageContext.request.contextPath}/login.jsp" method="get">
       <button type="submit">Login</button>
     </form>
 
-    <form action="register.jsp" method="get">
+    <form action="${pageContext.request.contextPath}/register.jsp" method="get">
       <button type="submit">Register</button>
     </form>
   </div>

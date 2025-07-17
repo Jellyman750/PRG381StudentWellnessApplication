@@ -157,7 +157,7 @@
       <button type="submit">Login</button>
     </form>
     <div class="back-link">
-            <p><a href="index.jsp">← Back to Home</a></p>
+            <p><a href="${pageContext.request.contextPath}/index.jsp">← Back to Home</a></p>
         </div>
   </div>
 </body>
