@@ -76,29 +76,32 @@ public class MainDashboard extends javax.swing.JFrame {
         
         
         tblAppointment.getSelectionModel().addListSelectionListener(e -> {
-    if (!e.getValueIsAdjusting() && tblAppointment.getSelectedRow() != -1) {
-        int selectedRow = tblAppointment.getSelectedRow();
+            if (!e.getValueIsAdjusting() && tblAppointment.getSelectedRow() != -1) {
+                int selectedRow = tblAppointment.getSelectedRow();
 
-        int appointmentID = (int) tblAppointment.getValueAt(selectedRow, 0);
-        String studentNumber = tblAppointment.getValueAt(selectedRow, 1).toString();
-        String counselorNameFromTable = tblAppointment.getValueAt(selectedRow, 2).toString();
-        Date date = Date.valueOf(tblAppointment.getValueAt(selectedRow, 3).toString());
-        Time time = Time.valueOf(tblAppointment.getValueAt(selectedRow, 4).toString());
-        String status = tblAppointment.getValueAt(selectedRow, 5).toString();
+                int appointmentID = (int) tblAppointment.getValueAt(selectedRow, 0);
+                String studentNumber = tblAppointment.getValueAt(selectedRow, 1).toString();
+                String counselorNameFromTable = tblAppointment.getValueAt(selectedRow, 2).toString(); // counselor full name
+                Date date = Date.valueOf(tblAppointment.getValueAt(selectedRow, 3).toString());
+                Time time = Time.valueOf(tblAppointment.getValueAt(selectedRow, 4).toString());
 
-        txtStudentID.setText(studentNumber);
+                txtStudentID.setText(studentNumber);
 
-        comboCounselorName.setSelectedItem(counselorNameFromTable);
-
-        datePicker.getModel().setDate(
-            date.toLocalDate().getYear(),
-            date.toLocalDate().getMonthValue() - 1,
-            date.toLocalDate().getDayOfMonth()
-        );
-        datePicker.getModel().setSelected(true);
-        timeSpinner.setValue(time);
-        comboBoxStatus.setSelectedItem(status);
-    }
+                for (int i = 0; i < comboCounselorName.getItemCount(); i++) {
+                    ComboItem item = (ComboItem) comboCounselorName.getItemAt(i);
+                    if (item.toString().equalsIgnoreCase(counselorNameFromTable)) {
+                        comboCounselorName.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            datePicker.getModel().setDate(
+                date.toLocalDate().getYear(),
+                date.toLocalDate().getMonthValue() - 1,
+                date.toLocalDate().getDayOfMonth()
+            );
+            datePicker.getModel().setSelected(true);
+            timeSpinner.setValue(time);
+        }
 });
     }
     private void loadCounselors(){//loads rhe counselors into the combobox
@@ -124,9 +127,14 @@ public class MainDashboard extends javax.swing.JFrame {
 
     private void addActionListeners() {
         // Appointments
+        new javax.swing.Timer(300000, e -> {//updates  the satus to completed
+            appointmentManager.markPastAppointmentsAsCompleted();
+            appointmentManager.ViewAllAppointments(tblAppointment, counselorDAO);
+        }).start();
+        
         btnBookAppointment.addActionListener(e -> {//insert appointment
             try{
-            appointmentManager.insertAppointment(txtStudentID, comboCounselorName , datePicker, timeSpinner, comboBoxStatus, jTable1);
+            appointmentManager.insertAppointment(txtStudentID, comboCounselorName , datePicker, timeSpinner, tblAppointment);
             appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
             }
             catch(Exception ex){
@@ -140,7 +148,7 @@ public class MainDashboard extends javax.swing.JFrame {
             return;
         }
         int appointmentID = (int) tblAppointment.getValueAt(selectedRow, 0); // get appointment id from table
-        appointmentManager.updateAppointment(appointmentID,txtStudentID,comboCounselorName,datePicker,timeSpinner,comboBoxStatus,tblAppointment);
+        appointmentManager.updateAppointment(appointmentID,txtStudentID,comboCounselorName,datePicker,timeSpinner,tblAppointment);
         appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
             }
             catch(Exception ex){
@@ -149,7 +157,7 @@ public class MainDashboard extends javax.swing.JFrame {
         });
         btnCancelAppointment.addActionListener(e -> {//delete appontment
           try {
-            appointmentManager.deleteAppointment(tblAppointment);
+            appointmentManager.cancelAppointment(tblAppointment); 
                 appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error deleting appointment: " + ex.getMessage());
@@ -206,7 +214,6 @@ public class MainDashboard extends javax.swing.JFrame {
         comboCounselorName.setSelectedIndex(0);
         datePicker.getModel().setValue(null);
         timeSpinner.setValue(new java.util.Date());
-        comboBoxStatus.setSelectedIndex(0);
     }
 
     private void addCounselor() {
@@ -616,7 +623,6 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel2 = new JLabel("Counselor Name:");
         jLabel3 = new JLabel("Date:");
         jLabel4 = new JLabel("Time:");
-        jLabel5 = new JLabel("Status:");
 
         Font labelFont = new Font("Arial", Font.PLAIN, 14);
         jLabel1.setForeground(Color.WHITE);
@@ -627,8 +633,6 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel3.setFont(labelFont);
         jLabel4.setForeground(Color.WHITE);
         jLabel4.setFont(labelFont);
-        jLabel5.setForeground(Color.WHITE);
-        jLabel5.setFont(labelFont);
 
         txtStudentID  = new JTextField();
         comboCounselorName = new JComboBox(); 
@@ -651,8 +655,6 @@ public class MainDashboard extends javax.swing.JFrame {
         comboCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
         datePicker.setFont(new Font("Arial", Font.PLAIN, 14));
         timeSpinner.setFont(new Font("Arial", Font.PLAIN, 14));
-        comboBoxStatus = new JComboBox<>(new String[]{"Scheduled", "Cancelled", "Completed"});
-        comboBoxStatus.setFont(new Font("Arial", Font.PLAIN, 14));
 
         DefaultTableModel modelAppointment = new DefaultTableModel(new Object[][]{},new String[]{"ID", "Student Name", "Counselor Name", "Date", "Time", "Status"}) {
             @Override
@@ -694,9 +696,10 @@ public class MainDashboard extends javax.swing.JFrame {
 
 
         GroupLayout appLayout = new GroupLayout(jDesktopPane1);
-        jDesktopPane1.setLayout(appLayout);
-        appLayout.setHorizontalGroup(
-                appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                jDesktopPane1.setLayout(appLayout);
+
+                appLayout.setHorizontalGroup(
+                    appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(appLayout.createSequentialGroup()
                             .addGap(20)
                             .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -708,8 +711,7 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                 .addComponent(jLabel4)
                                 .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel5)
-                                .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
+                            )
                             .addGap(20)
                             .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
@@ -724,47 +726,49 @@ public class MainDashboard extends javax.swing.JFrame {
                                     .addGap(10)
                                     .addComponent(btnClearFields)
                                     .addGap(10)
-                                    .addComponent(btnExitAppointments)))
-                            .addContainerGap(20, Short.MAX_VALUE))
+                                    .addComponent(btnExitAppointments))
+                            )
+                            .addContainerGap(20, Short.MAX_VALUE)
+                        )
                 );
-        appLayout.setVerticalGroup(
-                appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+
+                appLayout.setVerticalGroup(
+                    appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(appLayout.createSequentialGroup()
-                                .addGap(20)
-                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(appLayout.createSequentialGroup()
-                                                .addComponent(jLabel1)
-                                                .addGap(6)
-                                                .addComponent(txtStudentID, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(jLabel2)
-                                                .addGap(6)
-                                                .addComponent(comboCounselorName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(jLabel3)
-                                                .addGap(6)
-                                                .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(jLabel4)
-                                                .addGap(6)
-                                                .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
-                                                .addGap(10)
-                                                .addComponent(jLabel5)
-                                                .addGap(6)
-                                                .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE))
-                                .addGap(15)
-                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnBookAppointment)
-                                        .addComponent(btnUpdateAppointment1)
-                                        .addComponent(btnCancelAppointment))
-                                .addGap(15)
-                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnViewAllAppointments)
-                                        .addComponent(btnClearFields)
-                                        .addComponent(btnExitAppointments))
-                                .addContainerGap(20, Short.MAX_VALUE))
-        );
+                            .addGap(20)
+                            .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(appLayout.createSequentialGroup()
+                                    .addComponent(jLabel1)
+                                    .addGap(6)
+                                    .addComponent(txtStudentID, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                    .addGap(10)
+                                    .addComponent(jLabel2)
+                                    .addGap(6)
+                                    .addComponent(comboCounselorName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                    .addGap(10)
+                                    .addComponent(jLabel3)
+                                    .addGap(6)
+                                    .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
+                                    .addGap(10)
+                                    .addComponent(jLabel4)
+                                    .addGap(6)
+                                    .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
+                                )
+                                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE)
+                            )
+                            .addGap(15)
+                            .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(btnBookAppointment)
+                                .addComponent(btnUpdateAppointment1)
+                                .addComponent(btnCancelAppointment))
+                            .addGap(15)
+                            .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(btnViewAllAppointments)
+                                .addComponent(btnClearFields)
+                                .addComponent(btnExitAppointments))
+                            .addContainerGap(20, Short.MAX_VALUE)
+                        )
+                );
         jTabbedPane2.addTab("Appointments", jDesktopPane1);
 
         // === COUNSELORS TAB ===
@@ -1054,13 +1058,13 @@ fLayout.setVerticalGroup(
     private JTabbedPane jTabbedPane2;
     private JDesktopPane jDesktopPane1;
     private JPanel panelCounselors, panelFeedback;
-    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, jLabel10;
+    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel6, jLabel7, jLabel8, jLabel9, jLabel10;
     private JLabel labCounselor, labSpecialization, labCounselorEmail, labAvailability, labSearchCounselor;
     private JTextField txtStudentID, txtCounselorNameInput, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSearchCounselor;
     private JComboBox<ComboItem> comboCounselorName;
     private JDatePickerImpl datePicker, feedbackDatePicker;
     private JSpinner timeSpinner;
-    private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2, ratingComboBox;
+    private JComboBox<String>  jComboBox1, jComboBox2, ratingComboBox;
     private JTable jTable1, tblAppointment, jTable3;
     private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3, jScrollPane4;
     private JTextArea jTextArea1;

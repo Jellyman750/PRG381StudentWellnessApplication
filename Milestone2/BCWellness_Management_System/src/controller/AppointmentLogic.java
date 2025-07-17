@@ -13,6 +13,7 @@ import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import controller.ComboItem;
+import java.util.Calendar;
 import model.Counselor;
 
 public class AppointmentLogic {
@@ -45,13 +46,32 @@ public class AppointmentLogic {
         } catch (NumberFormatException e) {
             return "Student ID must be numeric.";
         }
+        // Combine date and time into one Date object
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            calendar.setTime(utilDate);
 
-        Date sqlDate = new Date(utilDate.getTime());
-        if (sqlDate.before(new Date(System.currentTimeMillis()))) {//makes sure the date is valid
-            return "Appointment date cannot be in the past.";
-        }
+            java.util.Calendar timeCal = java.util.Calendar.getInstance();
+            timeCal.setTime(utilTime);
+            int hour = timeCal.get(Calendar.HOUR_OF_DAY);
+            int minute = timeCal.get(Calendar.MINUTE);
+            if (hour < 8 || (hour >= 17 && minute > 0)) {// Checks if time is outside allowed range
+                return "Appointment time must be between 08:00 and 17:00.";
+            }
+
+            calendar.set(java.util.Calendar.HOUR_OF_DAY, timeCal.get(java.util.Calendar.HOUR_OF_DAY));
+            calendar.set(java.util.Calendar.MINUTE, timeCal.get(java.util.Calendar.MINUTE));
+            calendar.set(java.util.Calendar.SECOND, 0);
+            calendar.set(java.util.Calendar.MILLISECOND, 0);
+
+            java.util.Date combinedDateTime = calendar.getTime();
+            java.util.Date now = new java.util.Date();
+
+            if (combinedDateTime.before(now)) {
+                return "Appointment must be scheduled for a future time.";
+            }
         // Check for double booking
         int counselorID = ((ComboItem) counselorItem).getId();
+        Date sqlDate = new Date(utilDate.getTime());
         Time sqlTime = new Time(utilTime.getTime());
         if (isDoubleBooked(counselorID, sqlDate, sqlTime)) {
             return "This counselor is already booked for the selected date and time.";
@@ -59,9 +79,7 @@ public class AppointmentLogic {
         return null; // valid
     }
     
-    //refreshed table when table is changed
-    
-    
+    //displays all the appointments  
     public void ViewAllAppointments(JTable table,CounselorDAO counselorDAO){
         ArrayList<Appointment> appointments=appointmentDAO.viewAppointment();
         DefaultTableModel model= (DefaultTableModel) table.getModel();
@@ -101,16 +119,13 @@ public class AppointmentLogic {
     }
     
     //inserts into database table
-    public void insertAppointment(JTextField txtStudentID, JComboBox<ComboItem> comboCounselor,JDatePickerImpl datePicker, JSpinner timeSpinner, 
-                JComboBox<String> comboStatus, JTable appointmentTable){
+    public void insertAppointment(JTextField txtStudentID, JComboBox<ComboItem> comboCounselor,JDatePickerImpl datePicker, JSpinner timeSpinner, JTable appointmentTable){
         try {
             //gets inputs
             String studentNum = txtStudentID.getText().trim();
             ComboItem counselorItem = (ComboItem) comboCounselor.getSelectedItem();
             java.util.Date utilDate = (java.util.Date) datePicker.getModel().getValue();
             java.util.Date utilTime = (java.util.Date) timeSpinner.getValue();
-            comboStatus.setSelectedIndex(0);
-            String status = comboStatus.getSelectedItem().toString();
             //validates inputs
             String error = validateInput(studentNum, counselorItem, utilDate, utilTime);
             if (error != null) {
@@ -122,7 +137,7 @@ public class AppointmentLogic {
             Date date = new Date(utilDate.getTime());
             Time time = new Time(utilTime.getTime());
             //inserts into db
-            appointmentDAO.insertAppointment(studentID, counselorID, date, time, status);
+            appointmentDAO.insertAppointment(studentID, counselorID, date, time);
             JOptionPane.showMessageDialog(null, "Appointment added");
 
         } catch (IOException e) {
@@ -133,15 +148,13 @@ public class AppointmentLogic {
     }
 
     //update appointment
-    public void updateAppointment(int appointmentID,JTextField txtStudentID, JComboBox<ComboItem> comboCounselor,JDatePickerImpl datePicker, JSpinner timeSpinner, 
-                JComboBox<String> comboStatus, JTable appointmentTable){
+    public void updateAppointment(int appointmentID,JTextField txtStudentID, JComboBox<ComboItem> comboCounselor,JDatePickerImpl datePicker, JSpinner timeSpinner,JTable appointmentTable){
         try{
         //get inputs
         String studentNum=txtStudentID.getText().trim();
         ComboItem counselorItem=(ComboItem) comboCounselor.getSelectedItem();
         java.util.Date utilDate=(java.util.Date) datePicker.getModel().getValue();
         java.util.Date utilTime=(java.util.Date) timeSpinner.getValue();
-        String status=comboStatus.getSelectedItem().toString();
         //validate inputs
         String error= validateInput(studentNum,counselorItem,utilDate,utilTime);
         if(error!=null){
@@ -154,7 +167,7 @@ public class AppointmentLogic {
         Time time= new Time(utilTime.getTime());
         
         //update database
-        appointmentDAO.updateAppointment(appointmentID,studentID, counselorID, date, time, status);
+        appointmentDAO.updateAppointment(appointmentID,studentID, counselorID, date, time);
         JOptionPane.showMessageDialog(null, "Appointment updated");
         }
         catch (IOException e) {
@@ -163,8 +176,8 @@ public class AppointmentLogic {
         JOptionPane.showMessageDialog(null, "Unexpected error: " + ex.getMessage());
     }
     }
-    
-    public boolean deleteAppointment(JTable table){
+    //cancels appointment
+    public boolean cancelAppointment(JTable table){
         //get he selected row
         int selectedRow=table.getSelectedRow();
         if (selectedRow==-1){
@@ -176,8 +189,26 @@ public class AppointmentLogic {
             return false;
         }
         int appointmentID=(int) table.getValueAt(selectedRow,0);
-        appointmentDAO.deleteAppointment(appointmentID);
+        appointmentDAO.cancelAppointment(appointmentID);
         return true;
+    }
+     //changes status to completed when the appointment date and time has passed
+    public void markPastAppointmentsAsCompleted() {
+        ArrayList<Appointment> appointments = appointmentDAO.viewAppointment();
+        java.util.Date now = new java.util.Date();
+
+        for (Appointment a : appointments) {
+            // check only scheduled appointments
+            if ("Scheduled".equalsIgnoreCase(a.getStatus())) {
+                // combine date and time
+                java.util.Date appointmentDateTime = new java.util.Date(
+                        a.getAppointmentDate().getTime() + a.getAppointmentTime().getTime()
+                );
+                if (appointmentDateTime.before(now)) {
+                    appointmentDAO.updateAppointmentStatus(a.getAppointmentID());// updates status
+                }
+            }
+        }
     }
     
     

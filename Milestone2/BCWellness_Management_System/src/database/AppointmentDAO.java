@@ -108,14 +108,14 @@ public class AppointmentDAO { // Data Access Object for managing Appointment tab
     }
 
     // Inserts a new appointment into the Appointment table and returns success status
-    public boolean insertAppointment(int studentNumber, int counselorID, java.sql.Date appointmentDate, java.sql.Time appointmentTime, String status) {
+    public boolean insertAppointment(int studentNumber, int counselorID, java.sql.Date appointmentDate, java.sql.Time appointmentTime) {
         String query = "INSERT INTO Appointment (studentNumber, counselorID, appointmentDate, appointmentTime, status) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = dbConnection.getConnection().prepareStatement(query)) {
             ps.setInt(1, studentNumber);
             ps.setInt(2, counselorID);
             ps.setDate(3, appointmentDate);
             ps.setTime(4, appointmentTime);
-            ps.setString(5, status);
+            ps.setString(5, "Scheduled");
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException ex) {
@@ -125,15 +125,14 @@ public class AppointmentDAO { // Data Access Object for managing Appointment tab
     }
 
     // Updates an existing appointment and returns success status
-    public boolean updateAppointment(int appointmentID, int studentNumber, int counselorID, java.sql.Date appointmentDate, java.sql.Time appointmentTime, String status) {
-        String query = "UPDATE Appointment SET studentNumber = ?, counselorID = ?, appointmentDate = ?, appointmentTime = ?, status = ? WHERE appointmentID = ?";
+    public boolean updateAppointment(int appointmentID, int studentNumber, int counselorID, java.sql.Date appointmentDate, java.sql.Time appointmentTime) {
+        String query = "UPDATE Appointment SET studentNumber = ?, counselorID = ?, appointmentDate = ?, appointmentTime = ? WHERE appointmentID = ?";
         try (PreparedStatement ps = dbConnection.getConnection().prepareStatement(query)) {
             ps.setInt(1, studentNumber);
             ps.setInt(2, counselorID);
             ps.setDate(3, appointmentDate);
             ps.setTime(4, appointmentTime);
-            ps.setString(5, status);
-            ps.setInt(6, appointmentID);
+            ps.setInt(5, appointmentID);
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException ex) {
@@ -143,7 +142,7 @@ public class AppointmentDAO { // Data Access Object for managing Appointment tab
     }
 
     // Changes the status of the appointment to cancelled
-    public boolean deleteAppointment(int appointmentID) {
+    public boolean cancelAppointment(int appointmentID) {
         String query = "UPDATE Appointment SET status=? WHERE appointmentID = ?";
         try (PreparedStatement ps = dbConnection.getConnection().prepareStatement(query)) {
             ps.setString(1, "Cancelled");
@@ -199,4 +198,17 @@ public class AppointmentDAO { // Data Access Object for managing Appointment tab
         }
         return appointments;
     }
+    // updates appointment status to completed
+    public void updateAppointmentStatus(int appointmentID) {
+    try {
+        PreparedStatement ps = dbConnection.getConnection().prepareStatement(
+            "UPDATE Appointment SET status = ? WHERE appointmentID = ?"
+        );
+        ps.setString(1, "Completed");
+        ps.setInt(2, appointmentID);
+        ps.executeUpdate();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
 }
