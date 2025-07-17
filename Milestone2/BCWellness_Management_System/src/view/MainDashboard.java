@@ -68,6 +68,7 @@ public class MainDashboard extends javax.swing.JFrame {
             db.disconnect();
         }
         addActionListeners();
+        viewAllCounselors();
         addCounselorTableClickListener();
         appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
 
@@ -168,9 +169,7 @@ public class MainDashboard extends javax.swing.JFrame {
         btnAddCounselor.addActionListener(e -> addCounselor());
         btnUpdateCounselor.addActionListener(e -> updateCounselor());
         btnRemoveCounselor.addActionListener(e -> removeCounselor());
-        btnViewAllCounselors.addActionListener(e -> viewAllCounselors());
         btnClearCounselor.addActionListener(e -> clearCounselorFields());
-        btnExitCounselor.addActionListener(e -> exitApplication());
 
         // Feedback
         btnSubmitFeedback.addActionListener(e -> submitFeedback());
@@ -812,9 +811,9 @@ public class MainDashboard extends javax.swing.JFrame {
         btnRemoveCounselor = new JButton("Remove Counselor");
         btnViewAllCounselors = new JButton("View All");
         btnClearCounselor = new JButton("Clear");
-        btnExitCounselor = new JButton("Exit");
 
-        for (JButton btn : new JButton[]{btnAddCounselor, btnUpdateCounselor, btnRemoveCounselor, btnViewAllCounselors, btnClearCounselor, btnExitCounselor}) {
+
+        for (JButton btn : new JButton[]{btnAddCounselor, btnUpdateCounselor, btnRemoveCounselor, btnViewAllCounselors, btnClearCounselor}) {
             btn.setBackground(buttonColor);
             btn.setForeground(Color.WHITE);
             btn.setFont(buttonFont);
@@ -843,7 +842,10 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addComponent(labCounselorEmail)
                                 .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                 .addComponent(labAvailability)
-                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addGap(25) // To center the button ( (160 - 110) / 2 = 25 )
+                                .addComponent(btnClearCounselor, GroupLayout.PREFERRED_SIZE, 110, GroupLayout.PREFERRED_SIZE)
+                        )
                         .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addComponent(labSearchCounselor)
                                 .addComponent(txtSearchCounselor, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
@@ -853,14 +855,11 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(btnUpdateCounselor)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(btnRemoveCounselor))
-                                .addGroup(cLayout.createSequentialGroup()
-                                        .addComponent(btnViewAllCounselors)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(btnClearCounselor)
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(btnExitCounselor)))
+                                        .addComponent(btnRemoveCounselor)
+                                )
+                        )
         );
+
 
         cLayout.setVerticalGroup(
                 cLayout.createSequentialGroup()
@@ -880,7 +879,10 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(labAvailability)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addGap(15)
+                                        .addComponent(btnClearCounselor, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                                )
                                 .addGroup(cLayout.createSequentialGroup()
                                         .addComponent(labSearchCounselor)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -892,12 +894,11 @@ public class MainDashboard extends javax.swing.JFrame {
                                                 .addComponent(btnAddCounselor)
                                                 .addComponent(btnUpdateCounselor)
                                                 .addComponent(btnRemoveCounselor))
-                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                                .addComponent(btnViewAllCounselors)
-                                                .addComponent(btnClearCounselor)
-                                                .addComponent(btnExitCounselor))))
+
+                                )
+                        )
         );
+
         jTabbedPane2.addTab("Counselors", panelCounselors);
 
         // === FEEDBACK TAB ===
