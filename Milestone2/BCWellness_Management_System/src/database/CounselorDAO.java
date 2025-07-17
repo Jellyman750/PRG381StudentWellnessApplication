@@ -22,8 +22,37 @@ public class CounselorDAO {
     public void createCounselor() {
         if (dbConnection.tableExists("Counselor")) {
             System.out.println("Counselor table already exists");
-            return;
+            try {
+                String query = "SELECT * FROM Counselor FETCH FIRST 5 ROWS ONLY"; // Derby syntax
+                ResultSet result = dbConnection.getConnection().createStatement().executeQuery(query);
+                System.out.println("First 5 Counselors:");
+                boolean hasData = false;
+                while (result.next()) {
+                    hasData = true;
+                    int id = result.getInt("counselorID");
+                    String name = result.getString("counselorName");
+                    String surname = result.getString("counselorSurname");
+                    String email = result.getString("counselorEmail");
+                    String spec = result.getString("specialisation");
+                    boolean available = result.getBoolean("availability");
+
+                    System.out.printf("ID: %d, Name: %s %s, Email: %s, Specialisation: %s, Available: %b\n",
+                            id, name, surname, email, spec, available);
+                }
+                if (!hasData) {
+                    System.out.println("No counselors found.");
+                }
+            } catch (SQLException ex) {
+                System.err.println("Error fetching counselors: " + ex.getMessage());
+            }
+        } else {
+            createCounselorTable();
+            populateCounselorTable();
         }
+    }
+
+
+    private void createCounselorTable() {
         try {
             String query = "CREATE TABLE Counselor (" +
                     "counselorID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
@@ -32,17 +61,13 @@ public class CounselorDAO {
                     "counselorEmail VARCHAR(100) NOT NULL, " +
                     "specialisation VARCHAR(100) NOT NULL, " +
                     "availability BOOLEAN NOT NULL)";
-            try (Statement stmt = dbConnection.getConnection().createStatement()) {
-                stmt.execute(query);
-            }
-            populateCounselorTable();
-            System.out.println("Counselor table created and populated.");
+            dbConnection.getConnection().createStatement().execute(query);
+            System.out.println("Counselor table created.");
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.err.println("Error creating Counselor table: " + ex.getMessage());
         }
     }
 
-    //Populates the Counselor table with sample data.
     private void populateCounselorTable() {
         try {
             String insert = "INSERT INTO Counselor (counselorName, counselorSurname, counselorEmail, specialisation, availability) VALUES " +
@@ -61,13 +86,13 @@ public class CounselorDAO {
                     "('Jack', 'Evans', 'jack13@wellness.org', 'Therapy', TRUE)," +
                     "('Olivia', 'Parker', 'olivia14@wellness.org', 'Academic', TRUE)," +
                     "('Ben', 'Turner', 'ben15@wellness.org', 'Therapy', FALSE)";
-            try (Statement stmt = dbConnection.getConnection().createStatement()) {
-                stmt.execute(insert);
-            }
+            dbConnection.getConnection().createStatement().execute(insert);
+            System.out.println("Counselor table populated.");
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.err.println("Error populating Counselor table: " + ex.getMessage());
         }
     }
+
 
     //inserts a new counselor into the counselor table
     public boolean insertCounselor(String name, String surname, String email, String specialisation, boolean availability) {

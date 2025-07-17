@@ -50,15 +50,20 @@ public class MainDashboard extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
         }
         addActionListeners();
+        addCounselorTableClickListener();
         loadScheduledAppointments();
+
         jTabbedPane2.addChangeListener(e -> {
             int selectedTab = jTabbedPane2.getSelectedIndex();
             String selectedTitle = jTabbedPane2.getTitleAt(selectedTab);
 
             if (selectedTitle.equals("Appointments")) {
                 loadScheduledAppointments();
+            } else if (selectedTitle.equals("Counselors")) {
+                loadCounselorsToTable();
             }
         });
+
 
     }
 
@@ -120,6 +125,47 @@ public class MainDashboard extends javax.swing.JFrame {
         }
     }
 
+    private void loadCounselorsToTable() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0); // Clear existing data
+
+        ArrayList<Counselor> counselors = counselorDAO.viewCounselor();
+
+        for (Counselor c : counselors) {
+            model.addRow(new Object[]{
+                    c.getName() + " " + c.getSurname(),
+                    c.getSpecialization(),
+                    c.getEmail(),
+                    c.isAvailable() ? "Available" : "Not Available"
+            });
+        }
+    }
+
+    private void addCounselorTableClickListener() {
+        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int selectedRow = jTable1.getSelectedRow();
+
+                if (selectedRow >= 0) {
+                    // Get values from the selected row
+                    String name = jTable1.getValueAt(selectedRow, 0).toString();
+                    String specialization = jTable1.getValueAt(selectedRow, 1).toString();
+                    String email = jTable1.getValueAt(selectedRow, 2).toString();
+                    String availability = jTable1.getValueAt(selectedRow, 3).toString();
+
+                    // Set the input fields
+                    txtCounselorNameInput.setText(name);
+                    txtSpecialization.setText(specialization);
+                    txtCounselorEmail.setText(email);
+                    jComboBox1.setSelectedItem(availability);
+                }
+            }
+        });
+    }
+
+
+
     // Dummy methods for UI
     private void bookAppointment() {
         if (txtStudentName.getText().isEmpty() || txtCounselorName.getText().isEmpty() ||
@@ -179,16 +225,16 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void addCounselor() {
-        if (comboCounselor.getSelectedItem() == null ||
-                txtCounselorEmail.getText().isEmpty() ||
-                txtSpecialization.getText().isEmpty()) {
+        if (txtCounselorNameInput.getText().trim().isEmpty() ||
+                txtCounselorEmail.getText().trim().isEmpty() ||
+                txtSpecialization.getText().trim().isEmpty()) {
 
             JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
             return;
         }
 
-        String name = comboCounselor.getSelectedItem().toString();
-        String[] parts = name.split(" ", 2);
+        String nameInput = txtCounselorNameInput.getText().trim();
+        String[] parts = nameInput.split(" ", 2);
         String firstName = parts[0];
         String surname = (parts.length > 1) ? parts[1] : "";
         String email = txtCounselorEmail.getText();
@@ -202,7 +248,7 @@ public class MainDashboard extends javax.swing.JFrame {
             // Optionally add it to the table for immediate feedback:
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             model.addRow(new Object[]{
-                    name,
+                    nameInput,
                     specialisation,
                     email,
                     availability ? "Available" : "Not Available"
@@ -248,7 +294,7 @@ public class MainDashboard extends javax.swing.JFrame {
 
 
     private void clearCounselorFields() {
-        comboCounselor.setSelectedIndex(-1);
+        txtCounselorName.setText("");
         txtSpecialization.setText("");
         txtCounselorEmail.setText("");
         jComboBox1.setSelectedIndex(0);
@@ -448,7 +494,8 @@ public class MainDashboard extends javax.swing.JFrame {
         txtCounselorEmail = new JTextField();
         labCounselorEmail = new JLabel("Email:");
         labAvailability = new JLabel("Availability:");
-        comboCounselor = new JComboBox<>(new String[]{"John Doe", "Jane Smith", "Alex Brown"});
+        txtCounselorNameInput = new JTextField();
+        txtCounselorNameInput.setFont(new Font("Arial", Font.PLAIN, 14));
         jComboBox1 = new JComboBox<>(new String[]{"Available", "Not Available"});
 
         labCounselor.setForeground(Color.WHITE);
@@ -462,7 +509,7 @@ public class MainDashboard extends javax.swing.JFrame {
 
         txtSpecialization.setFont(new Font("Arial", Font.PLAIN, 14));
         txtCounselorEmail.setFont(new Font("Arial", Font.PLAIN, 14));
-        comboCounselor.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
         jComboBox1.setFont(new Font("Arial", Font.PLAIN, 14));
 
         jTable1 = new JTable(new DefaultTableModel(
@@ -495,7 +542,7 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addGap(20)
                                 .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(labCounselor)
-                                        .addComponent(comboCounselor, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtCounselorNameInput, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(labSpecialization)
                                         .addComponent(txtSpecialization, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(labCounselorEmail)
@@ -527,7 +574,7 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addGroup(cLayout.createSequentialGroup()
                                                 .addComponent(labCounselor)
                                                 .addGap(6)
-                                                .addComponent(comboCounselor, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(txtCounselorNameInput, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(labSpecialization)
                                                 .addGap(6)
@@ -670,10 +717,10 @@ public class MainDashboard extends javax.swing.JFrame {
     private JDesktopPane jDesktopPane1;
     private JPanel panelCounselors, panelFeedback;
     private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, labCounselor, labSpecialization, labCounselorEmail, labAvailability;
-    private JTextField txtStudentName, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate;
+    private JTextField txtStudentName,txtCounselorNameInput, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate;
     private JDatePickerImpl datePicker;
     private JSpinner timeSpinner;
-    private JComboBox<String> comboBoxStatus, comboCounselor, jComboBox1, jComboBox2;
+    private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2;
     private JTable jTable1, jTable2;
     private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3;
     private JTextArea jTextArea1;

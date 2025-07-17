@@ -20,10 +20,39 @@ public class FeedbackDAO {
 
     //Creates the Feedback table if it doesn't exist and populates it with sample data
     public void createFeedback() {
+
         if (dbConnection.tableExists("Feedback")) {
             System.out.println("Feedback table already exists");
-            return;
+            try {
+                String query = "SELECT * FROM Feedback FETCH FIRST 5 ROWS ONLY"; // Derby syntax
+                ResultSet result = dbConnection.getConnection().createStatement().executeQuery(query);
+                System.out.println("First 5 Feedback entries:");
+                boolean hasData = false;
+                while (result.next()) {
+                    hasData = true;
+                    int id = result.getInt("feedbackID");
+                    int appointmentID = result.getInt("appointmentID");
+                    String studentNumber = result.getString("studentNumber");
+                    int rating = result.getInt("rating");
+                    String comments = result.getString("comments");
+                    Date submissionDate = result.getDate("submission_date");
+
+                    System.out.printf("ID: %d, AppointmentID: %d, Student: %s, Rating: %d, Comments: %s, Date: %s\n",
+                            id, appointmentID, studentNumber, rating, comments, submissionDate);
+                }
+                if (!hasData) {
+                    System.out.println("No feedback entries found.");
+                }
+            } catch (SQLException ex) {
+                System.err.println("Error fetching feedback: " + ex.getMessage());
+            }
+        } else {
+            createFeedbackTable();
+            populateFeedbackTable();
         }
+    }
+
+    private void createFeedbackTable() {
         try {
             String query = "CREATE TABLE Feedback (" +
                     "feedbackID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
@@ -33,20 +62,16 @@ public class FeedbackDAO {
                     "comments VARCHAR(500), " +
                     "submission_date DATE NOT NULL, " +
                     "FOREIGN KEY (appointmentID) REFERENCES Appointment(appointmentID))";
-            try (Statement stmt = dbConnection.getConnection().createStatement()) {
-                stmt.execute(query);
-            }
-            populateFeedbackTable();
-            System.out.println("Feedback table created and populated.");
+            dbConnection.getConnection().createStatement().execute(query);
+            System.out.println("Feedback table created.");
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.err.println("Error creating Feedback table: " + ex.getMessage());
         }
     }
 
-    //Populates the Feedback table with sample data
-    private void populateFeedbackTable() {
+    public void populateFeedbackTable() {
         try {
-            String insert = "INSERT INTO Feedback (appointmentID, studentNumber, rating, comments, submission_date) VALUES " +
+            String insert = "INSERT INTO Feedback (appointmentID, studentNumber, rating, comments, SUBMISSION_DATE) VALUES" +
                     "(1, '1001', 5, 'Great session!', '2025-07-01')," +
                     "(2, '1002', 4, 'Very helpful.', '2025-07-02')," +
                     "(3, '1003', 3, 'It was okay.', '2025-07-03')," +
@@ -62,13 +87,13 @@ public class FeedbackDAO {
                     "(13, '1013', 4, 'Quite useful.', '2025-07-13')," +
                     "(14, '1014', 4, 'Would recommend.', '2025-07-14')," +
                     "(15, '1015', 5, 'Perfect!', '2025-07-15')";
-            try (Statement stmt = dbConnection.getConnection().createStatement()) {
-                stmt.execute(insert);
-            }
+            dbConnection.getConnection().createStatement().execute(insert);
+            System.out.println("Feedback table populated.");
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.err.println("Error populating Feedback table: " + ex.getMessage());
         }
     }
+
 
     //inserts a new feedback entry into the feedback table
     public boolean insertFeedback(int appointmentID, String studentNumber, int rating, String comments, java.sql.Date submissionDate) {
