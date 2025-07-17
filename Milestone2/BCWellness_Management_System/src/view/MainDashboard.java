@@ -960,9 +960,10 @@ public class MainDashboard extends javax.swing.JFrame {
         feedbackDatePanelWrapper.add(feedbackDatePicker);
         feedbackDatePanelWrapper.setPreferredSize(new Dimension(160, 30));
 
-        GroupLayout fLayout = new GroupLayout(panelFeedback);
-        panelFeedback.setLayout(fLayout);
-        fLayout.setHorizontalGroup(
+  GroupLayout fLayout = new GroupLayout(panelFeedback);
+panelFeedback.setLayout(fLayout);
+
+fLayout.setHorizontalGroup(
     fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         .addGroup(fLayout.createSequentialGroup()
             .addGap(20)
@@ -979,7 +980,9 @@ public class MainDashboard extends javax.swing.JFrame {
                 .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
             .addGap(20)
             .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                // TABLE FIRST
                 .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                // BUTTONS DIRECTLY UNDER THE TABLE
                 .addGroup(fLayout.createSequentialGroup()
                     .addComponent(btnSubmitFeedback)
                     .addGap(10)
@@ -991,7 +994,7 @@ public class MainDashboard extends javax.swing.JFrame {
             .addContainerGap(20, Short.MAX_VALUE))
 );
 
-        fLayout.setVerticalGroup(
+fLayout.setVerticalGroup(
     fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
         .addGroup(fLayout.createSequentialGroup()
             .addGap(20)
@@ -1016,15 +1019,19 @@ public class MainDashboard extends javax.swing.JFrame {
                     .addComponent(jLabel7)
                     .addGap(6)
                     .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE))
-                .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE))
-            .addGap(15)
-            .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(btnSubmitFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
-                .addComponent(btnEditFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
-                .addComponent(btnDeleteFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
-                .addComponent(btnViewFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE))
+                .addGroup(fLayout.createSequentialGroup()
+                    .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 220, GroupLayout.PREFERRED_SIZE)
+                    .addGap(10)
+                    //  BUTTON ROW IMMEDIATELY AFTER TABLE
+                    .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnSubmitFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnEditFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnDeleteFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnViewFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE))))
             .addContainerGap(20, Short.MAX_VALUE))
 );
+
+
         jTabbedPane2.addTab("Feedback", panelFeedback);
 
         getContentPane().add(jTabbedPane2);
