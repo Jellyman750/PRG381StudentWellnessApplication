@@ -4,9 +4,6 @@
  */
 package view;
 
-import controller.AppointmentLogic;
-import controller.CounselorLogic;
-import controller.FeedbackLogic;
 import database.AppointmentDAO;
 import database.CounselorDAO;
 import database.DBConnection;
@@ -16,53 +13,47 @@ import model.Counselor;
 import model.Feedback;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.*;
-
+import java.sql.Date;
+import java.sql.Time;
+import java.util.ArrayList;
+import java.util.Properties;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
-
-
-
-
 public class MainDashboard extends javax.swing.JFrame {
 
-    private final AppointmentLogic appointmentManager = new AppointmentLogic();
-    private final CounselorLogic counselorManager;
-    private final FeedbackLogic feedbackManager = new FeedbackLogic();
     private final DBConnection db = new DBConnection();
-
     private ArrayList<Counselor> counselorList = new ArrayList<>();
+    private ArrayList<Feedback> feedbackList = new ArrayList<>();
 
-
-    //create dao objects
-    AppointmentDAO appointmentDAO;
-    CounselorDAO counselorDAO;
-    FeedbackDAO feedbackDAO;
+    // DAO objects
+    private final AppointmentDAO appointmentDAO = new AppointmentDAO(db);
+    private final CounselorDAO counselorDAO = new CounselorDAO(db);
+    private final FeedbackDAO feedbackDAO = new FeedbackDAO(db);
 
     public MainDashboard() {
         initComponents();
-
-        appointmentDAO = new AppointmentDAO(db);
-        counselorDAO = new CounselorDAO(db);
-        feedbackDAO = new FeedbackDAO(db);
-
-        counselorManager = new CounselorLogic(counselorDAO, feedbackDAO);
-
-
         try {
             db.connect();
             counselorDAO.createCounselor();
             appointmentDAO.createAppointment();
             feedbackDAO.createFeedback();
+            populateCounselorComboBox();
+            addFeedbackTableClickListener();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database driver not found: " + e.getMessage());
+            db.disconnect();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
+            db.disconnect();
         }
-
         addActionListeners();
         addCounselorTableClickListener();
         loadScheduledAppointments();
@@ -75,30 +66,51 @@ public class MainDashboard extends javax.swing.JFrame {
                 loadScheduledAppointments();
             } else if (selectedTitle.equals("Counselors")) {
                 viewAllCounselors();
+            } else if (selectedTitle.equals("Feedback")) {
+                viewFeedback();
             }
         });
     }
 
+    private void populateCounselorComboBox() {
+        jComboBox2.removeAllItems();
+        counselorList = counselorDAO.viewCounselor();
+        for (Counselor c : counselorList) {
+            jComboBox2.addItem(c.getName() + " " + c.getSurname() + " (ID: " + c.getCounselorID() + ")");
+        }
+    }
 
     private void addActionListeners() {
         // Appointments
         btnBookAppointment.addActionListener(e -> {
-            int studentNumber = Integer.parseInt(txtStudentName.getText());
-            int counselorID = Integer.parseInt(txtCounselorName.getText());
-            java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-            if (selectedDate == null) {
-                JOptionPane.showMessageDialog(this, "Please select a date.");
-                return;
+            try {
+                int studentNumber = Integer.parseInt(txtStudentName.getText().trim());
+                int counselorID = Integer.parseInt(txtCounselorName.getText().trim());
+                java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+                if (selectedDate == null) {
+                    JOptionPane.showMessageDialog(this, "Please select a date.");
+                    return;
+                }
+                java.sql.Date date = new java.sql.Date(selectedDate.getTime());
+
+                java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
+                java.sql.Time time = new java.sql.Time(selectedTime.getTime());
+
+                String status = comboBoxStatus.getSelectedItem().toString();
+
+                boolean success = appointmentDAO.insertAppointment(studentNumber, counselorID, date, time, status);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Appointment booked successfully.");
+                    loadScheduledAppointments();
+                    clearAppointmentFields();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error booking appointment.");
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter valid numbers for Student Number and Counselor ID.");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
-            java.sql.Date date = new java.sql.Date(selectedDate.getTime());
-
-            java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
-            java.sql.Time time = new java.sql.Time(selectedTime.getTime());
-
-            String status = comboBoxStatus.getSelectedItem().toString();
-
-            appointmentDAO.insertAppointment(studentNumber, counselorID, date, time, status);
-            JOptionPane.showMessageDialog(this, "Appointment booked successfully.");
         });
 
         btnUpdateAppointment1.addActionListener(e -> updateAppointment());
@@ -126,7 +138,6 @@ public class MainDashboard extends javax.swing.JFrame {
         model.setRowCount(0);
 
         ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
-
         for (Appointment a : appointments) {
             model.addRow(new Object[]{
                     a.getStudentNumber(),
@@ -138,40 +149,17 @@ public class MainDashboard extends javax.swing.JFrame {
         }
     }
 
-    private void loadCounselorsToTable() {
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.setRowCount(0); // Clear existing data
-
-        ArrayList<Counselor> counselors = counselorDAO.viewCounselor();
-
-        for (Counselor c : counselors) {
-            model.addRow(new Object[]{
-                    c.getName() + " " + c.getSurname(),
-                    c.getSpecialization(),
-                    c.getEmail(),
-                    c.isAvailable() ? "Available" : "Not Available"
-            });
-        }
-    }
-
     private void addCounselorTableClickListener() {
         jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 int selectedRow = jTable1.getSelectedRow();
-
                 if (selectedRow >= 0) {
-                    // Get values from the selected row
-                    String name = jTable1.getValueAt(selectedRow, 0).toString();
-                    String specialization = jTable1.getValueAt(selectedRow, 1).toString();
-                    String email = jTable1.getValueAt(selectedRow, 2).toString();
-                    String availability = jTable1.getValueAt(selectedRow, 3).toString();
-
-                    // Set the input fields
-                    txtCounselorNameInput.setText(name);
-                    txtSpecialization.setText(specialization);
-                    txtCounselorEmail.setText(email);
-                    jComboBox1.setSelectedItem(availability);
+                    Counselor c = counselorList.get(selectedRow);
+                    txtCounselorNameInput.setText(c.getName() + " " + c.getSurname());
+                    txtSpecialization.setText(c.getSpecialization());
+                    txtCounselorEmail.setText(c.getEmail());
+                    jComboBox1.setSelectedItem(c.isAvailable() ? "Available" : "Not Available");
                 }
             }
         });
@@ -182,55 +170,72 @@ public class MainDashboard extends javax.swing.JFrame {
         return email.matches(emailRegex);
     }
 
-
-    // Dummy methods for UI
-    private void bookAppointment() {
-        if (txtStudentName.getText().isEmpty() || txtCounselorName.getText().isEmpty() ||
-                datePicker.getModel().getValue() == null || timeSpinner.getValue() == null) {
-            JOptionPane.showMessageDialog(this, "Please fill in all appointment details.");
+    private void updateAppointment() {
+        int selectedRow = jTable2.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to update.");
             return;
         }
 
-        java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-        java.sql.Date sqlDate = new java.sql.Date(selectedDate.getTime());
+        try {
+            ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
+            int appointmentID = appointments.get(selectedRow).getAppointmentID();
 
-        java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
-        java.sql.Time sqlTime = new java.sql.Time(selectedTime.getTime());
+            int studentNumber = Integer.parseInt(txtStudentName.getText().trim());
+            int counselorID = Integer.parseInt(txtCounselorName.getText().trim());
+            java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+            if (selectedDate == null) {
+                JOptionPane.showMessageDialog(this, "Please select a date.");
+                return;
+            }
+            java.sql.Date date = new java.sql.Date(selectedDate.getTime());
 
-        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
-        model.addRow(new Object[]{
-                txtStudentName.getText(),
-                txtCounselorName.getText(),
-                sqlDate.toString(),
-                sqlTime.toString(),
-                comboBoxStatus.getSelectedItem().toString()
-        });
+            java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
+            java.sql.Time time = new java.sql.Time(selectedTime.getTime());
 
-        JOptionPane.showMessageDialog(this, "Appointment booked (dummy data).");
-        clearAppointmentFields();
-    }
+            String status = comboBoxStatus.getSelectedItem().toString();
 
-    private void loadAppointments() {
-        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
-        model.setRowCount(0); // Clear existing data
-
-        for (Appointment appt : appointmentDAO.viewAppointment()) {
-            model.addRow(new Object[]{
-                    appt.getStudentNumber(),
-                    appt.getCounselorID(),
-                    appt.getAppointmentDate().toString(),
-                    appt.getAppointmentTime().toString(),
-                    appt.getStatus()
-            });
+            boolean success = appointmentDAO.updateAppointment(appointmentID, studentNumber, counselorID, date, time, status);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Appointment updated successfully.");
+                loadScheduledAppointments();
+                clearAppointmentFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error updating appointment.");
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter valid numbers for Student Number and Counselor ID.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }
 
-    private void updateAppointment() {
-        JOptionPane.showMessageDialog(this, "Update Appointment clicked (logic to be added).");
-    }
-
     private void cancelAppointment() {
-        JOptionPane.showMessageDialog(this, "Cancel Appointment clicked (logic to be added).");
+        int selectedRow = jTable2.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to cancel.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to cancel this appointment?", "Confirm Cancel", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
+            int appointmentID = appointments.get(selectedRow).getAppointmentID();
+            boolean success = appointmentDAO.deleteAppointment(appointmentID);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Appointment cancelled successfully.");
+                loadScheduledAppointments();
+                clearAppointmentFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error cancelling appointment.");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }
 
     private void clearAppointmentFields() {
@@ -242,30 +247,59 @@ public class MainDashboard extends javax.swing.JFrame {
     }
 
     private void addCounselor() {
-        String nameInput = txtCounselorNameInput.getText().trim();
+        if (txtCounselorNameInput.getText().trim().isEmpty() ||
+                txtCounselorEmail.getText().trim().isEmpty() ||
+                txtSpecialization.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
+            return;
+        }
+
         String email = txtCounselorEmail.getText().trim();
-        String specialization = txtSpecialization.getText().trim();
-        String availability = jComboBox1.getSelectedItem().toString();
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.");
+            return;
+        }
 
-        String result = counselorManager.addCounselor(nameInput, email, specialization, availability);
+        String nameInput = txtCounselorNameInput.getText().trim();
+        String[] parts = nameInput.split(" ", 2);
+        String firstName = parts[0];
+        String surname = (parts.length > 1) ? parts[1] : "";
+        String specialisation = txtSpecialization.getText();
+        boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
 
-        if (result.equals("SUCCESS")) {
+        if (counselorDAO.counselorExists(firstName, surname, email)) {
+            JOptionPane.showMessageDialog(this, "A counselor with the same name or email already exists.");
+            return;
+        }
+
+        boolean success = counselorDAO.insertCounselor(firstName, surname, email, specialisation, availability);
+        if (success) {
             JOptionPane.showMessageDialog(this, "Counselor added successfully.");
             viewAllCounselors();
             clearCounselorFields();
+            populateCounselorComboBox();
         } else {
-            JOptionPane.showMessageDialog(this, result);
+            JOptionPane.showMessageDialog(this, "Error adding counselor.");
         }
     }
 
-
-
-
     private void updateCounselor() {
         int selectedRow = jTable1.getSelectedRow();
-
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Please select a counselor to update.");
+            return;
+        }
+
+        if (txtCounselorNameInput.getText().trim().isEmpty() ||
+                txtCounselorEmail.getText().trim().isEmpty() ||
+                txtSpecialization.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all counselor details.");
+            return;
+        }
+
+        String email = txtCounselorEmail.getText().trim();
+        if (!isValidEmail(email)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.");
             return;
         }
 
@@ -273,26 +307,25 @@ public class MainDashboard extends javax.swing.JFrame {
         int counselorID = selectedCounselor.getCounselorID();
 
         String nameInput = txtCounselorNameInput.getText().trim();
-        String email = txtCounselorEmail.getText().trim();
-        String specialization = txtSpecialization.getText().trim();
-        String availability = jComboBox1.getSelectedItem().toString();
+        String[] parts = nameInput.split(" ", 2);
+        String firstName = parts[0];
+        String surname = (parts.length > 1) ? parts[1] : "";
+        String specialisation = txtSpecialization.getText();
+        boolean availability = jComboBox1.getSelectedItem().toString().equalsIgnoreCase("Available");
 
-        String result = counselorManager.updateCounselor(counselorID, nameInput, email, specialization, availability);
-
-        if (result.equals("SUCCESS")) {
+        boolean success = counselorDAO.updateCounselor(counselorID, firstName, surname, email, specialisation, availability);
+        if (success) {
             JOptionPane.showMessageDialog(this, "Counselor updated successfully.");
             viewAllCounselors();
             clearCounselorFields();
+            populateCounselorComboBox();
         } else {
-            JOptionPane.showMessageDialog(this, result);
+            JOptionPane.showMessageDialog(this, "Error updating counselor.");
         }
     }
 
-
-
     private void removeCounselor() {
         int selectedRow = jTable1.getSelectedRow();
-
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Please select a counselor to remove.");
             return;
@@ -301,30 +334,59 @@ public class MainDashboard extends javax.swing.JFrame {
         Counselor selectedCounselor = counselorList.get(selectedRow);
         int counselorID = selectedCounselor.getCounselorID();
 
-        String message = counselorManager.getCounselorRelatedDataMessage(counselorID);
+        ArrayList<Appointment> appointments = counselorDAO.getAppointmentsByCounselor(counselorID);
+        ArrayList<Feedback> feedbacks = feedbackDAO.getFeedbackByCounselor(counselorID);
 
-        int confirm = JOptionPane.showConfirmDialog(this, message, "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        StringBuilder message = new StringBuilder("This counselor has related data:\n\n");
+        if (!appointments.isEmpty()) {
+            message.append("Appointments:\n");
+            for (Appointment app : appointments) {
+                message.append("- ")
+                        .append(app.getAppointmentDate())
+                        .append(" at ")
+                        .append(app.getAppointmentTime())
+                        .append(", Student: ")
+                        .append(app.getStudentNumber())
+                        .append(", Status: ")
+                        .append(app.getStatus())
+                        .append("\n");
+            }
+        }
+
+        if (!feedbacks.isEmpty()) {
+            message.append("\nFeedback:\n");
+            for (Feedback fb : feedbacks) {
+                message.append("- Student: ")
+                        .append(fb.getStudentNumber())
+                        .append(", Comment: ")
+                        .append(fb.getComments())
+                        .append("\n");
+            }
+        }
+
+        message.append("\nDo you want to delete the counselor and all related data?");
+        int confirm = JOptionPane.showConfirmDialog(this, message.toString(), "Confirm Deletion", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean success = counselorManager.deleteCounselorAndRelatedData(counselorID);
-
+            feedbackDAO.deleteFeedbackByCounselor(counselorID);
+            counselorDAO.deleteAppointmentsByCounselor(counselorID);
+            boolean success = counselorDAO.deleteCounselor(counselorID);
             if (success) {
                 JOptionPane.showMessageDialog(this, "Counselor and all related data deleted.");
                 viewAllCounselors();
+                clearCounselorFields();
+                populateCounselorComboBox();
             } else {
                 JOptionPane.showMessageDialog(this, "Error deleting counselor.");
             }
         }
     }
 
-
-
     private void viewAllCounselors() {
         try {
-            counselorList = counselorDAO.viewCounselor(); // Load counselors from DB
-
+            counselorList = counselorDAO.viewCounselor();
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            model.setRowCount(0); // Clear table
+            model.setRowCount(0);
 
             for (Counselor c : counselorList) {
                 model.addRow(new Object[]{
@@ -334,55 +396,227 @@ public class MainDashboard extends javax.swing.JFrame {
                         c.isAvailable() ? "Available" : "Not Available"
                 });
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error loading counselors: " + e.getMessage());
         }
     }
 
+    private void submitFeedback() {
+        try {
+            String selectedCounselor = (String) jComboBox2.getSelectedItem();
+            if (selectedCounselor == null) {
+                JOptionPane.showMessageDialog(this, "Please select a counselor.");
+                return;
+            }
+            int counselorID = Integer.parseInt(selectedCounselor.substring(selectedCounselor.indexOf("ID: ") + 4, selectedCounselor.indexOf(")")));
+            ArrayList<Appointment> appointments = appointmentDAO.getAppointmentsByCounselor(counselorID);
+            if (appointments.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No appointments found for this counselor.");
+                return;
+            }
+            int appointmentID = appointments.get(0).getAppointmentID();
+
+            String studentNumber = txtStudentNumber.getText().trim();
+            int rating = Integer.parseInt((String) ratingComboBox.getSelectedItem());
+            String comments = jTextArea1.getText().trim();
+            java.util.Date selectedDate = (java.util.Date) feedbackDatePicker.getModel().getValue();
+            if (selectedDate == null) {
+                JOptionPane.showMessageDialog(this, "Please select a submission date.");
+                return;
+            }
+            java.sql.Date submissionDate = new java.sql.Date(selectedDate.getTime());
+
+            if (studentNumber.isEmpty() || rating < 1 || rating > 5) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid student number and rating (1-5).");
+                return;
+            }
+
+            boolean success = feedbackDAO.insertFeedback(appointmentID, studentNumber, rating, comments, submissionDate);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Feedback submitted successfully.");
+                viewFeedback();
+                clearFeedbackFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error submitting feedback.");
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid student number and rating.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void editFeedback() {
+        int selectedRow = jTable3.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a feedback entry to edit.");
+            return;
+        }
+
+        try {
+            int feedbackID = feedbackList.get(selectedRow).getFeedbackID();
+            String selectedCounselor = (String) jComboBox2.getSelectedItem();
+            if (selectedCounselor == null) {
+                JOptionPane.showMessageDialog(this, "Please select a counselor.");
+                return;
+            }
+            int counselorID = Integer.parseInt(selectedCounselor.substring(selectedCounselor.indexOf("ID: ") + 4, selectedCounselor.indexOf(")")));
+            ArrayList<Appointment> appointments = appointmentDAO.getAppointmentsByCounselor(counselorID);
+            if (appointments.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No appointments found for this counselor.");
+                return;
+            }
+            int appointmentID = appointments.get(0).getAppointmentID();
+
+            String studentNumber = txtStudentNumber.getText().trim();
+            int rating = Integer.parseInt((String) ratingComboBox.getSelectedItem());
+            String comments = jTextArea1.getText().trim();
+            java.util.Date selectedDate = (java.util.Date) feedbackDatePicker.getModel().getValue();
+            if (selectedDate == null) {
+                JOptionPane.showMessageDialog(this, "Please select a submission date.");
+                return;
+            }
+            java.sql.Date submissionDate = new java.sql.Date(selectedDate.getTime());
+
+            if (studentNumber.isEmpty() || rating < 1 || rating > 5) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid student number and rating (1-5).");
+                return;
+            }
+
+            boolean success = feedbackDAO.updateFeedback(feedbackID, appointmentID, studentNumber, rating, comments, submissionDate);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Feedback updated successfully.");
+                viewFeedback();
+                clearFeedbackFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error updating feedback.");
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid student number and rating.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void deleteFeedback() {
+        int selectedRow = jTable3.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a feedback entry to delete.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this feedback?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            int feedbackID = feedbackList.get(selectedRow).getFeedbackID();
+            boolean success = feedbackDAO.deleteFeedback(feedbackID);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Feedback deleted successfully.");
+                viewFeedback();
+                clearFeedbackFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error deleting feedback.");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void viewFeedback() {
+        try {
+            feedbackList = feedbackDAO.viewFeedback();
+            DefaultTableModel model = (DefaultTableModel) jTable3.getModel();
+            model.setRowCount(0);
+
+            for (Feedback f : feedbackList) {
+                String counselorName = "Unknown";
+                for (Counselor c : counselorList) {
+                    ArrayList<Appointment> appointments = appointmentDAO.getAppointmentsByCounselor(c.getCounselorID());
+                    for (Appointment a : appointments) {
+                        if (a.getAppointmentID() == f.getAppointmentID()) {
+                            counselorName = c.getName() + " " + c.getSurname();
+                            break;
+                        }
+                    }
+                }
+                model.addRow(new Object[]{
+                        f.getFeedbackID(),
+                        counselorName,
+                        f.getStudentNumber(),
+                        f.getRating(),
+                        f.getComments(),
+                        f.getSubmissionDate().toString()
+                });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error loading feedback: " + e.getMessage());
+        }
+    }
+
+    private void clearFeedbackFields() {
+        jComboBox2.setSelectedIndex(-1);
+        txtStudentNumber.setText("");
+        ratingComboBox.setSelectedIndex(0);
+        jTextArea1.setText("");
+        feedbackDatePicker.getModel().setValue(null);
+    }
+
+  
+ private void addFeedbackTableClickListener() {
+    jTable3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            int selectedRow = jTable3.getSelectedRow();
+            if (selectedRow >= 0) {
+                Feedback feedback = feedbackList.get(selectedRow);
+
+                for (int i = 0; i < jComboBox2.getItemCount(); i++) {
+                    String item = (String) jComboBox2.getItemAt(i);
+                    ArrayList<Appointment> appointments = appointmentDAO.getAppointmentsByCounselor(
+                            Integer.parseInt(item.substring(item.indexOf("ID: ") + 4, item.indexOf(")")))
+                    );
+                    for (Appointment a : appointments) {
+                        if (a.getAppointmentID() == feedback.getAppointmentID()) {
+                            jComboBox2.setSelectedIndex(i);
+                            break;
+                        }
+                    }
+                }
+
+                txtStudentNumber.setText(String.valueOf(feedback.getStudentNumber()));
+                ratingComboBox.setSelectedItem(String.valueOf(feedback.getRating()));
+                jTextArea1.setText(feedback.getComments());
+
+                // FIXED: Properly cast to UtilDateModel before setting the date
+                java.sql.Date sqlDate = feedback.getSubmissionDate();
+                if (sqlDate != null) {
+                    java.util.Date utilDate = new java.util.Date(sqlDate.getTime());
+                    ((org.jdatepicker.impl.UtilDateModel) feedbackDatePicker.getModel()).setValue(utilDate);
+                } else {
+                    ((org.jdatepicker.impl.UtilDateModel) feedbackDatePicker.getModel()).setValue(null);
+                }
+            }
+        }
+    });
+}
 
 
 
     private void clearCounselorFields() {
-        txtCounselorNameInput.setText("");  // ✅ Correct field
+        txtCounselorNameInput.setText("");
         txtSpecialization.setText("");
         txtCounselorEmail.setText("");
         jComboBox1.setSelectedIndex(0);
     }
 
-    private void submitFeedback() {
-        JOptionPane.showMessageDialog(this, "Submit Feedback clicked (logic to be added).");
-    }
-
-    private void editFeedback() {
-        JOptionPane.showMessageDialog(this, "Edit Feedback clicked (logic to be added).");
-    }
-
-    private void deleteFeedback() {
-        JOptionPane.showMessageDialog(this, "Delete Feedback clicked (logic to be added).");
-    }
-
-    private void viewFeedback() {
-        JOptionPane.showMessageDialog(this, "View Feedback clicked (logic to be added).");
-    }
-
-    private void viewAppointments() {
-        JOptionPane.showMessageDialog(this, "View Appointments (logic to be added).");
-    }
-
-    private void exitApplication() {
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?", "Exit", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
-            System.exit(0);
-        }
-    }
-
     private void filterCounselorTable() {
         String searchText = txtSearchCounselor.getText().trim().toLowerCase();
-
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.setRowCount(0); // Clear table
+        model.setRowCount(0);
 
         for (Counselor c : counselorList) {
             String fullName = (c.getName() + " " + c.getSurname()).toLowerCase();
@@ -400,6 +634,14 @@ public class MainDashboard extends javax.swing.JFrame {
         }
     }
 
+    private void exitApplication() {
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit?", "Exit", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            db.disconnect();
+            System.exit(0);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void initComponents() {
         jTabbedPane2 = new JTabbedPane();
@@ -407,8 +649,8 @@ public class MainDashboard extends javax.swing.JFrame {
 
         // === APPOINTMENTS TAB ===
         jDesktopPane1 = new JDesktopPane();
-        jLabel1 = new JLabel("Student Name:");
-        jLabel2 = new JLabel("Counselor Name:");
+        jLabel1 = new JLabel("Student Number:");
+        jLabel2 = new JLabel("Counselor ID:");
         jLabel3 = new JLabel("Date:");
         jLabel4 = new JLabel("Time:");
         jLabel5 = new JLabel("Status:");
@@ -440,21 +682,17 @@ public class MainDashboard extends javax.swing.JFrame {
         JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "HH:mm");
         timeSpinner.setEditor(timeEditor);
 
-        Dimension fieldSize = new Dimension(160, 30);
-
         txtStudentName.setFont(new Font("Arial", Font.PLAIN, 14));
         txtCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
         datePicker.setFont(new Font("Arial", Font.PLAIN, 14));
         timeSpinner.setFont(new Font("Arial", Font.PLAIN, 14));
-
-
 
         comboBoxStatus = new JComboBox<>(new String[]{"Scheduled", "Cancelled", "Completed"});
         comboBoxStatus.setFont(new Font("Arial", Font.PLAIN, 14));
 
         jTable2 = new JTable(new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Student Name", "Counselor Name", "Date", "Time", "Status"}
+                new String[]{"Student Number", "Counselor ID", "Date", "Time", "Status"}
         ));
         jTable2.setFont(new Font("Arial", Font.PLAIN, 12));
         jScrollPane2 = new JScrollPane(jTable2);
@@ -484,8 +722,6 @@ public class MainDashboard extends javax.swing.JFrame {
         JPanel timePanelWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         timePanelWrapper.add(timeSpinner);
         timePanelWrapper.setPreferredSize(new Dimension(160, 30));
-
-
 
         GroupLayout appLayout = new GroupLayout(jDesktopPane1);
         jDesktopPane1.setLayout(appLayout);
@@ -578,7 +814,6 @@ public class MainDashboard extends javax.swing.JFrame {
         txtSearchCounselor = new JTextField();
         txtSearchCounselor.setFont(new Font("Arial", Font.PLAIN, 14));
 
-
         labCounselor.setForeground(Color.WHITE);
         labCounselor.setFont(labelFont);
         labSpecialization.setForeground(Color.WHITE);
@@ -590,7 +825,6 @@ public class MainDashboard extends javax.swing.JFrame {
 
         txtSpecialization.setFont(new Font("Arial", Font.PLAIN, 14));
         txtCounselorEmail.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
         jComboBox1.setFont(new Font("Arial", Font.PLAIN, 14));
 
         jTable1 = new JTable(new DefaultTableModel(
@@ -615,22 +849,14 @@ public class MainDashboard extends javax.swing.JFrame {
             btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         }
 
-        txtSearchCounselor.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                filterCounselorTable();
-            }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                filterCounselorTable();
-            }
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                filterCounselorTable();
-            }
+        txtSearchCounselor.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) { filterCounselorTable(); }
+            public void removeUpdate(DocumentEvent e) { filterCounselorTable(); }
+            public void insertUpdate(DocumentEvent e) { filterCounselorTable(); }
         });
-
 
         GroupLayout cLayout = new GroupLayout(panelCounselors);
         panelCounselors.setLayout(cLayout);
-
         cLayout.setAutoCreateGaps(true);
         cLayout.setAutoCreateContainerGaps(true);
 
@@ -644,8 +870,7 @@ public class MainDashboard extends javax.swing.JFrame {
                                 .addComponent(labCounselorEmail)
                                 .addComponent(txtCounselorEmail, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
                                 .addComponent(labAvailability)
-                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                        )
+                                .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
                         .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addComponent(labSearchCounselor)
                                 .addComponent(txtSearchCounselor, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
@@ -655,16 +880,13 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(btnUpdateCounselor)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(btnRemoveCounselor)
-                                )
+                                        .addComponent(btnRemoveCounselor))
                                 .addGroup(cLayout.createSequentialGroup()
                                         .addComponent(btnViewAllCounselors)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(btnClearCounselor)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(btnExitCounselor)
-                                )
-                        )
+                                        .addComponent(btnExitCounselor)))
         );
 
         cLayout.setVerticalGroup(
@@ -685,8 +907,7 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(labAvailability)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                )
+                                        .addComponent(jComboBox1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addGroup(cLayout.createSequentialGroup()
                                         .addComponent(labSearchCounselor)
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -697,20 +918,13 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                                 .addComponent(btnAddCounselor)
                                                 .addComponent(btnUpdateCounselor)
-                                                .addComponent(btnRemoveCounselor)
-                                        )
+                                                .addComponent(btnRemoveCounselor))
                                         .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addGroup(cLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                                 .addComponent(btnViewAllCounselors)
                                                 .addComponent(btnClearCounselor)
-                                                .addComponent(btnExitCounselor)
-                                        )
-                                )
-                        )
+                                                .addComponent(btnExitCounselor))))
         );
-
-
-
         jTabbedPane2.addTab("Counselors", panelCounselors);
 
         // === FEEDBACK TAB ===
@@ -719,6 +933,7 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel7 = new JLabel("Feedback:");
         jLabel8 = new JLabel("Student Number:");
         jLabel9 = new JLabel("Submission Date:");
+        jLabel10 = new JLabel("Rating:");
 
         jLabel6.setForeground(Color.WHITE);
         jLabel6.setFont(labelFont);
@@ -728,18 +943,31 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel8.setFont(labelFont);
         jLabel9.setForeground(Color.WHITE);
         jLabel9.setFont(labelFont);
+        jLabel10.setForeground(Color.WHITE);
+        jLabel10.setFont(labelFont);
 
-        jComboBox2 = new JComboBox<>(new String[]{"Counselor 1", "Counselor 2", "Counselor 3"});
+        jComboBox2 = new JComboBox<>();
         jComboBox2.setFont(new Font("Arial", Font.PLAIN, 14));
         txtStudentNumber = new JTextField();
         txtStudentNumber.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtSubmissionDate = new JTextField();
-        txtSubmissionDate.setFont(new Font("Arial", Font.PLAIN, 14));
+        UtilDateModel feedbackDateModel = new UtilDateModel();
+        JDatePanelImpl feedbackDatePanel = new JDatePanelImpl(feedbackDateModel, p);
+        feedbackDatePicker = new JDatePickerImpl(feedbackDatePanel, new org.jdatepicker.impl.DateComponentFormatter());
+        feedbackDatePicker.setFont(new Font("Arial", Font.PLAIN, 14));
+        ratingComboBox = new JComboBox<>(new String[]{"1", "2", "3", "4", "5"});
+        ratingComboBox.setFont(new Font("Arial", Font.PLAIN, 14));
         jTextArea1 = new JTextArea(5, 20);
         jTextArea1.setFont(new Font("Arial", Font.PLAIN, 14));
         jTextArea1.setLineWrap(true);
         jTextArea1.setWrapStyleWord(true);
         jScrollPane3 = new JScrollPane(jTextArea1);
+
+        jTable3 = new JTable(new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Feedback ID", "Counselor", "Student Number", "Rating", "Comments", "Submission Date"}
+        ));
+        jTable3.setFont(new Font("Arial", Font.PLAIN, 12));
+        jScrollPane4 = new JScrollPane(jTable3);
 
         btnSubmitFeedback = new JButton("Submit");
         btnEditFeedback = new JButton("Edit");
@@ -754,58 +982,76 @@ public class MainDashboard extends javax.swing.JFrame {
             btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         }
 
+        JPanel feedbackDatePanelWrapper = new JPanel();
+        feedbackDatePanelWrapper.setLayout(new BoxLayout(feedbackDatePanelWrapper, BoxLayout.Y_AXIS));
+        feedbackDatePanelWrapper.add(feedbackDatePicker);
+        feedbackDatePanelWrapper.setPreferredSize(new Dimension(160, 30));
+
         GroupLayout fLayout = new GroupLayout(panelFeedback);
         panelFeedback.setLayout(fLayout);
         fLayout.setHorizontalGroup(
-                fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(fLayout.createSequentialGroup()
-                                .addGap(20)
-                                .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel6)
-                                        .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel8)
-                                        .addComponent(txtStudentNumber, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel9)
-                                        .addComponent(txtSubmissionDate, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel7)
-                                        .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(fLayout.createSequentialGroup()
-                                                .addComponent(btnSubmitFeedback)
-                                                .addGap(10)
-                                                .addComponent(btnEditFeedback)
-                                                .addGap(10)
-                                                .addComponent(btnDeleteFeedback)
-                                                .addGap(10)
-                                                .addComponent(btnViewFeedback)))
-                                .addContainerGap(20, Short.MAX_VALUE))
-        );
+    fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(fLayout.createSequentialGroup()
+            .addGap(20)
+            .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(jLabel6)
+                .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel8)
+                .addComponent(txtStudentNumber, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel10)
+                .addComponent(ratingComboBox, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel9)
+                .addComponent(feedbackDatePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel7)
+                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
+            .addGap(20)
+            .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                .addGroup(fLayout.createSequentialGroup()
+                    .addComponent(btnSubmitFeedback)
+                    .addGap(10)
+                    .addComponent(btnEditFeedback)
+                    .addGap(10)
+                    .addComponent(btnDeleteFeedback)
+                    .addGap(10)
+                    .addComponent(btnViewFeedback)))
+            .addContainerGap(20, Short.MAX_VALUE))
+);
+
         fLayout.setVerticalGroup(
-                fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(fLayout.createSequentialGroup()
-                                .addGap(20)
-                                .addComponent(jLabel6)
-                                .addGap(6)
-                                .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addGap(10)
-                                .addComponent(jLabel8)
-                                .addGap(6)
-                                .addComponent(txtStudentNumber, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addGap(10)
-                                .addComponent(jLabel9)
-                                .addGap(6)
-                                .addComponent(txtSubmissionDate, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addGap(10)
-                                .addComponent(jLabel7)
-                                .addGap(6)
-                                .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE)
-                                .addGap(15)
-                                .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnSubmitFeedback)
-                                        .addComponent(btnEditFeedback)
-                                        .addComponent(btnDeleteFeedback)
-                                        .addComponent(btnViewFeedback))
-                                .addContainerGap(20, Short.MAX_VALUE))
-        );
+    fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        .addGroup(fLayout.createSequentialGroup()
+            .addGap(20)
+            .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(fLayout.createSequentialGroup()
+                    .addComponent(jLabel6)
+                    .addGap(6)
+                    .addComponent(jComboBox2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addGap(10)
+                    .addComponent(jLabel8)
+                    .addGap(6)
+                    .addComponent(txtStudentNumber, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addGap(10)
+                    .addComponent(jLabel10)
+                    .addGap(6)
+                    .addComponent(ratingComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addGap(10)
+                    .addComponent(jLabel9)
+                    .addGap(6)
+                    .addComponent(feedbackDatePanelWrapper, GroupLayout.PREFERRED_SIZE, 30, GroupLayout.PREFERRED_SIZE)
+                    .addGap(10)
+                    .addComponent(jLabel7)
+                    .addGap(6)
+                    .addComponent(jScrollPane3, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE))
+                .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 250, GroupLayout.PREFERRED_SIZE))
+            .addGap(15)
+            .addGroup(fLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(btnSubmitFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnEditFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnDeleteFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnViewFeedback, GroupLayout.PREFERRED_SIZE, 35, GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(20, Short.MAX_VALUE))
+);
         jTabbedPane2.addTab("Feedback", panelFeedback);
 
         getContentPane().add(jTabbedPane2);
@@ -827,13 +1073,14 @@ public class MainDashboard extends javax.swing.JFrame {
     private JTabbedPane jTabbedPane2;
     private JDesktopPane jDesktopPane1;
     private JPanel panelCounselors, panelFeedback;
-    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, labCounselor, labSpecialization, labCounselorEmail, labAvailability,labSearchCounselor;
-    private JTextField txtStudentName,txtCounselorNameInput, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSubmissionDate,txtSearchCounselor;
-    private JDatePickerImpl datePicker;
+    private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, jLabel10;
+    private JLabel labCounselor, labSpecialization, labCounselorEmail, labAvailability, labSearchCounselor;
+    private JTextField txtStudentName, txtCounselorNameInput, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSearchCounselor;
+    private JDatePickerImpl datePicker, feedbackDatePicker;
     private JSpinner timeSpinner;
-    private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2;
-    private JTable jTable1, jTable2;
-    private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3;
+    private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2, ratingComboBox;
+    private JTable jTable1, jTable2, jTable3;
+    private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3, jScrollPane4;
     private JTextArea jTextArea1;
     private JButton btnCancelAppointment, btnBookAppointment, btnUpdateAppointment1, btnClearFields, btnExitAppointments;
     private JButton btnAddCounselor, btnUpdateCounselor, btnRemoveCounselor, btnViewAllCounselors, btnClearCounselor, btnExitCounselor;
