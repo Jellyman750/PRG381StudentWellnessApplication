@@ -34,7 +34,7 @@ public class DBConnection {
     public DBConnection(){}
     
     
-    //connect metod
+    //establishes a connecton to the javadb
     public void connect() throws ClassNotFoundException{
         try{
             Class.forName(DRIVER);
@@ -47,6 +47,10 @@ public class DBConnection {
             ex.printStackTrace();
         }
     }
+    //returns the database connection
+    public Connection getConnection() {
+        return this.conn;
+    }
     //test if tables already exist
     public boolean tableExists(String tableName){
         try {
@@ -58,109 +62,6 @@ public class DBConnection {
             e.printStackTrace();
             return false;
         }
-    }
-    
- //CRUD operations
-    //create tables
-    //Appointment
-    public void createAppointment() {
-     if (tableExists("Appointment")) {
-         System.out.println("Appointment table already exists");
-
-         try {
-             String query = "SELECT * FROM Appointment FETCH FIRST 5 ROWS ONLY";
-             ResultSet result = this.conn.createStatement().executeQuery(query);
-
-             System.out.println("First 5 Appointments:");
-             boolean hasData = false;
-             while (result.next()) {
-                 hasData = true;
-                 int id = result.getInt("appointmentID");
-                 String studentNumber = result.getString("studentNumber");
-                 int counselorID = result.getInt("counselorID");
-                 Date date = result.getDate("appointmentDate");
-                 Time time = result.getTime("appointmentTime");
-                 String status = result.getString("status");
-
-                 System.out.println("ID: " + id + ", Student: " + studentNumber + ", Counselor: " + counselorID +
-                         ", Date: " + date + ", Time: " + time + ", Status: " + status);
-             }
-             if (!hasData) {
-                 System.out.println("No appointments found.");
-             }
-
-         } catch (SQLException ex) {
-             ex.printStackTrace();
-         }
-     } else {
-         createAppointmentTable();
-         populateAppointmentTable();
-     }
- }
-
-    public void createAppointmentTable() {
-        try {
-            String query = "CREATE TABLE Appointment (" +
-                    "appointmentID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
-                    "studentNumber VARCHAR(50) NOT NULL, " +
-                    "counselorID INT NOT NULL, " +
-                    "appointmentDate DATE NOT NULL, " +
-                    "appointmentTime TIME NOT NULL, " +
-                    "status VARCHAR(20) NOT NULL, " +
-                    "FOREIGN KEY (counselorID) REFERENCES Counselor(counselorID)" +
-                    ")";
-            conn.createStatement().execute(query);
-            System.out.println("Appointment table created.");
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public void populateAppointmentTable() {
-        try {
-            String insert = "INSERT INTO Appointment (studentNumber, counselorID, appointmentDate, appointmentTime, status) VALUES " +
-                    "('1001', 1, '2025-07-01', '09:00:00', 'Scheduled')," +
-                    "('1002', 2, '2025-07-02', '10:00:00', 'Completed')," +
-                    "('1003', 3, '2025-07-03', '11:00:00', 'Cancelled')," +
-                    "('1004', 4, '2025-07-04', '12:00:00', 'Scheduled')," +
-                    "('1005', 5, '2025-07-05', '13:00:00', 'Completed')," +
-                    "('1006', 6, '2025-07-06', '14:00:00', 'Cancelled')," +
-                    "('1007', 7, '2025-07-07', '15:00:00', 'Scheduled')," +
-                    "('1008', 8, '2025-07-08', '16:00:00', 'Completed')," +
-                    "('1009', 9, '2025-07-09', '08:00:00', 'Cancelled')," +
-                    "('1010', 10, '2025-07-10', '09:30:00', 'Scheduled')," +
-                    "('1011', 11, '2025-07-11', '10:30:00', 'Completed')," +
-                    "('1012', 12, '2025-07-12', '11:30:00', 'Cancelled')," +
-                    "('1013', 13, '2025-07-13', '12:30:00', 'Scheduled')," +
-                    "('1014', 14, '2025-07-14', '13:30:00', 'Completed')," +
-                    "('1015', 15, '2025-07-15', '14:30:00', 'Cancelled')";
-            conn.createStatement().execute(insert);
-            System.out.println("Appointment table populated.");
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public ArrayList<Appointment> getScheduledAppointments() {
-        ArrayList<Appointment> list = new ArrayList<>();
-        try {
-            String query = "SELECT * FROM Appointment WHERE status = 'Scheduled'";
-            ResultSet result = conn.createStatement().executeQuery(query);
-
-            while (result.next()) {
-                int id = result.getInt("appointmentID");
-                String studentNumber = result.getString("studentNumber");
-                int counselorID = result.getInt("counselorID");
-                Date date = result.getDate("appointmentDate");
-                Time time = result.getTime("appointmentTime");
-                String status = result.getString("status");
-
-                list.add(new Appointment(id, Integer.parseInt(studentNumber), counselorID, date, time, status));
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return list;
     }
 
 

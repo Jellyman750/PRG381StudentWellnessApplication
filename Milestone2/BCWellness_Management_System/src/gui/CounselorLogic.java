@@ -1,6 +1,7 @@
 
 package gui;
 
+import database.CounselorDAO;
 import database.DBConnection;
 import java.io.*;
 import java.util.*;
@@ -10,6 +11,7 @@ import java.sql.PreparedStatement;
 
 public class CounselorLogic {
     private static final String COUNSELOR_FILE = "data/counselors.txt";
+
 
     public static boolean addCounselor(String name, String specialization, String availability) {
         List<String[]> counselors = readCounselors();
@@ -101,7 +103,8 @@ public class CounselorLogic {
         try {
             DBConnection db = new DBConnection();
             db.connect();
-            db.insertCounselor(name, surname, email, specialisation, availability);
+            CounselorDAO counselorDAO = new CounselorDAO(db);
+            counselorDAO.insertCounselor(name, surname, email, specialisation, availability);
             db.disconnect();
             return true;
 

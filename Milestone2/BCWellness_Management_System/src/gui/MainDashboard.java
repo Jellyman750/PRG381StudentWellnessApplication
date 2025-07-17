@@ -4,7 +4,10 @@
  */
 package gui;
 
+import database.AppointmentDAO;
+import database.CounselorDAO;
 import database.DBConnection;
+import database.FeedbackDAO;
 import model.Appointment;
 import model.Counselor;
 import model.Feedback;
@@ -28,14 +31,19 @@ public class MainDashboard extends javax.swing.JFrame {
     private final CounselorLogic counselorManager = new CounselorLogic();
     private final FeedbackLogic feedbackManager = new FeedbackLogic();
     private final DBConnection db = new DBConnection();
+    
+    //create dao objects
+    AppointmentDAO appointmentDAO= new AppointmentDAO(db);
+    CounselorDAO counselorDAO = new CounselorDAO(db);
+    FeedbackDAO feedbackDAO = new FeedbackDAO(db);
 
     public MainDashboard() {
         initComponents();
         try {
             db.connect();
-            db.createCounselor();
-            db.createAppointment();
-            db.createFeedback();
+            counselorDAO.createCounselor();
+            appointmentDAO.createAppointment();
+            feedbackDAO.createFeedback();
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -71,7 +79,7 @@ public class MainDashboard extends javax.swing.JFrame {
 
             String status = comboBoxStatus.getSelectedItem().toString();
 
-            db.insertAppointment(studentNumber, counselorID, date, time, status);
+            appointmentDAO.insertAppointment(studentNumber, counselorID, date, time, status);
             JOptionPane.showMessageDialog(this, "Appointment booked successfully.");
         });
 
@@ -99,7 +107,7 @@ public class MainDashboard extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
         model.setRowCount(0);
 
-        ArrayList<Appointment> appointments = db.getScheduledAppointments();
+        ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
 
         for (Appointment a : appointments) {
             model.addRow(new Object[]{
@@ -143,7 +151,7 @@ public class MainDashboard extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
         model.setRowCount(0); // Clear existing data
 
-        for (Appointment appt : db.viewAppointment()) {
+        for (Appointment appt : appointmentDAO.viewAppointment()) {
             model.addRow(new Object[]{
                     appt.getStudentNumber(),
                     appt.getCounselorID(),
@@ -216,7 +224,7 @@ public class MainDashboard extends javax.swing.JFrame {
 
     private void viewAllCounselors() {
         try {
-            ArrayList<Counselor> counselors = db.viewCounselor();
+            ArrayList<Counselor> counselors = counselorDAO.viewCounselor();
 
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             model.setRowCount(0); // Clear table
