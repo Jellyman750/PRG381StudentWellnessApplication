@@ -142,11 +142,12 @@ public class AppointmentDAO { // Data Access Object for managing Appointment tab
         }
     }
 
-    // Deletes an appointment by ID and returns success status
-    public boolean deleteAppointment(int id) {
-        String query = "DELETE FROM Appointment WHERE appointmentID = ?";
+    // Changes the status of the appointment to cancelled
+    public boolean deleteAppointment(int appointmentID) {
+        String query = "UPDATE Appointment SET status=? WHERE appointmentID = ?";
         try (PreparedStatement ps = dbConnection.getConnection().prepareStatement(query)) {
-            ps.setInt(1, id);
+            ps.setString(1, "Cancelled");
+            ps.setInt(2,appointmentID);
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException ex) {

@@ -4,6 +4,7 @@
  */
 package view;
 
+import controller.AppointmentLogic;
 import database.AppointmentDAO;
 import database.CounselorDAO;
 import database.DBConnection;
@@ -11,6 +12,9 @@ import database.FeedbackDAO;
 import model.Appointment;
 import model.Counselor;
 import model.Feedback;
+import controller.ComboItem;
+import controller.CounselorLogic;
+import controller.FeedbackLogic;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -19,6 +23,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Date;
 import java.sql.Time;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Properties;
 import org.jdatepicker.impl.JDatePanelImpl;
@@ -30,11 +35,16 @@ public class MainDashboard extends javax.swing.JFrame {
     private final DBConnection db = new DBConnection();
     private ArrayList<Counselor> counselorList = new ArrayList<>();
     private ArrayList<Feedback> feedbackList = new ArrayList<>();
-
-    // DAO objects
-    private final AppointmentDAO appointmentDAO = new AppointmentDAO(db);
+    
+    private final AppointmentDAO appointmentDAO= new AppointmentDAO(db);
     private final CounselorDAO counselorDAO = new CounselorDAO(db);
     private final FeedbackDAO feedbackDAO = new FeedbackDAO(db);
+
+    private final AppointmentLogic appointmentManager = new AppointmentLogic(appointmentDAO);
+    //private final CounselorLogic counselorManager;
+    private final FeedbackLogic feedbackManager = new FeedbackLogic();
+    
+    private int selectedAppointmentID = -1;
 
     public MainDashboard() {
         initComponents();
@@ -45,6 +55,9 @@ public class MainDashboard extends javax.swing.JFrame {
             feedbackDAO.createFeedback();
             populateCounselorComboBox();
             addFeedbackTableClickListener();
+             loadCounselors();
+            appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
+            
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database driver not found: " + e.getMessage());
@@ -56,20 +69,48 @@ public class MainDashboard extends javax.swing.JFrame {
         }
         addActionListeners();
         addCounselorTableClickListener();
-        loadScheduledAppointments();
+        appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
 
-        jTabbedPane2.addChangeListener(e -> {
-            int selectedTab = jTabbedPane2.getSelectedIndex();
-            String selectedTitle = jTabbedPane2.getTitleAt(selectedTab);
+        appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
+        
+        
+        tblAppointment.getSelectionModel().addListSelectionListener(e -> {
+    if (!e.getValueIsAdjusting() && tblAppointment.getSelectedRow() != -1) {
+        int selectedRow = tblAppointment.getSelectedRow();
 
-            if (selectedTitle.equals("Appointments")) {
-                loadScheduledAppointments();
-            } else if (selectedTitle.equals("Counselors")) {
-                viewAllCounselors();
-            } else if (selectedTitle.equals("Feedback")) {
-                viewFeedback();
+        int appointmentID = (int) tblAppointment.getValueAt(selectedRow, 0);
+        String studentNumber = tblAppointment.getValueAt(selectedRow, 1).toString();
+        String counselorNameFromTable = tblAppointment.getValueAt(selectedRow, 2).toString();
+        Date date = Date.valueOf(tblAppointment.getValueAt(selectedRow, 3).toString());
+        Time time = Time.valueOf(tblAppointment.getValueAt(selectedRow, 4).toString());
+        String status = tblAppointment.getValueAt(selectedRow, 5).toString();
+
+        txtStudentID.setText(studentNumber);
+
+        comboCounselorName.setSelectedItem(counselorNameFromTable);
+
+        datePicker.getModel().setDate(
+            date.toLocalDate().getYear(),
+            date.toLocalDate().getMonthValue() - 1,
+            date.toLocalDate().getDayOfMonth()
+        );
+        datePicker.getModel().setSelected(true);
+        timeSpinner.setValue(time);
+        comboBoxStatus.setSelectedItem(status);
+    }
+});
+    }
+    private void loadCounselors(){//loads rhe counselors into the combobox
+        try{
+            List<Counselor> counselors=counselorDAO.viewCounselor(); 
+            for (Counselor c:counselors){
+                ComboItem item = new ComboItem(c.getCounselorID(), c.getName() + " " + c.getSurname());
+                comboCounselorName.addItem(item);
             }
-        });
+        }
+        catch(Exception ex){
+            JOptionPane.showMessageDialog(this,"Failded to load counselors: "+ex.getMessage());
+        }
     }
 
     private void populateCounselorComboBox() {
@@ -82,39 +123,44 @@ public class MainDashboard extends javax.swing.JFrame {
 
     private void addActionListeners() {
         // Appointments
-        btnBookAppointment.addActionListener(e -> {
-            try {
-                int studentNumber = Integer.parseInt(txtStudentName.getText().trim());
-                int counselorID = Integer.parseInt(txtCounselorName.getText().trim());
-                java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-                if (selectedDate == null) {
-                    JOptionPane.showMessageDialog(this, "Please select a date.");
-                    return;
-                }
-                java.sql.Date date = new java.sql.Date(selectedDate.getTime());
-
-                java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
-                java.sql.Time time = new java.sql.Time(selectedTime.getTime());
-
-                String status = comboBoxStatus.getSelectedItem().toString();
-
-                boolean success = appointmentDAO.insertAppointment(studentNumber, counselorID, date, time, status);
-                if (success) {
-                    JOptionPane.showMessageDialog(this, "Appointment booked successfully.");
-                    loadScheduledAppointments();
-                    clearAppointmentFields();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Error booking appointment.");
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Please enter valid numbers for Student Number and Counselor ID.");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        btnBookAppointment.addActionListener(e -> {//insert appointment
+            try{
+            appointmentManager.insertAppointment(txtStudentID, comboCounselorName , datePicker, timeSpinner, comboBoxStatus, jTable1);
+            appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
+            }
+            catch(Exception ex){
+                JOptionPane.showMessageDialog(this,"Error booking appointment"+ex.getMessage());
+            } });
+        btnUpdateAppointment1.addActionListener(e -> {//update appointment
+        try{
+            int selectedRow = tblAppointment.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to update.");
+            return;
+        }
+        int appointmentID = (int) tblAppointment.getValueAt(selectedRow, 0); // get appointment id from table
+        appointmentManager.updateAppointment(appointmentID,txtStudentID,comboCounselorName,datePicker,timeSpinner,comboBoxStatus,tblAppointment);
+        appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
+            }
+            catch(Exception ex){
+                JOptionPane.showMessageDialog(this,"Error updating appointment"+ex.getMessage());
             }
         });
-
-        btnUpdateAppointment1.addActionListener(e -> updateAppointment());
-        btnCancelAppointment.addActionListener(e -> cancelAppointment());
+        btnCancelAppointment.addActionListener(e -> {//delete appontment
+          try {
+            appointmentManager.deleteAppointment(tblAppointment);
+                appointmentManager.loadScheduledAppointments(tblAppointment, counselorDAO);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting appointment: " + ex.getMessage());
+            }  
+        });
+        btnViewAllAppointments.addActionListener(e -> {
+            try {
+                appointmentManager.ViewAllAppointments(tblAppointment,counselorDAO);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error loading appointments: " + ex.getMessage());
+            }
+             });
         btnClearFields.addActionListener(e -> clearAppointmentFields());
         btnExitAppointments.addActionListener(e -> exitApplication());
 
@@ -133,21 +179,6 @@ public class MainDashboard extends javax.swing.JFrame {
         btnViewFeedback.addActionListener(e -> viewFeedback());
     }
 
-    private void loadScheduledAppointments() {
-        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
-        model.setRowCount(0);
-
-        ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
-        for (Appointment a : appointments) {
-            model.addRow(new Object[]{
-                    a.getStudentNumber(),
-                    a.getCounselorID(),
-                    a.getAppointmentDate().toString(),
-                    a.getAppointmentTime().toString(),
-                    a.getStatus()
-            });
-        }
-    }
 
     private void addCounselorTableClickListener() {
         jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -170,77 +201,10 @@ public class MainDashboard extends javax.swing.JFrame {
         return email.matches(emailRegex);
     }
 
-    private void updateAppointment() {
-        int selectedRow = jTable2.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select an appointment to update.");
-            return;
-        }
-
-        try {
-            ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
-            int appointmentID = appointments.get(selectedRow).getAppointmentID();
-
-            int studentNumber = Integer.parseInt(txtStudentName.getText().trim());
-            int counselorID = Integer.parseInt(txtCounselorName.getText().trim());
-            java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-            if (selectedDate == null) {
-                JOptionPane.showMessageDialog(this, "Please select a date.");
-                return;
-            }
-            java.sql.Date date = new java.sql.Date(selectedDate.getTime());
-
-            java.util.Date selectedTime = (java.util.Date) timeSpinner.getValue();
-            java.sql.Time time = new java.sql.Time(selectedTime.getTime());
-
-            String status = comboBoxStatus.getSelectedItem().toString();
-
-            boolean success = appointmentDAO.updateAppointment(appointmentID, studentNumber, counselorID, date, time, status);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Appointment updated successfully.");
-                loadScheduledAppointments();
-                clearAppointmentFields();
-            } else {
-                JOptionPane.showMessageDialog(this, "Error updating appointment.");
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter valid numbers for Student Number and Counselor ID.");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-        }
-    }
-
-    private void cancelAppointment() {
-        int selectedRow = jTable2.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select an appointment to cancel.");
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to cancel this appointment?", "Confirm Cancel", JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        try {
-            ArrayList<Appointment> appointments = appointmentDAO.getScheduledAppointments();
-            int appointmentID = appointments.get(selectedRow).getAppointmentID();
-            boolean success = appointmentDAO.deleteAppointment(appointmentID);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Appointment cancelled successfully.");
-                loadScheduledAppointments();
-                clearAppointmentFields();
-            } else {
-                JOptionPane.showMessageDialog(this, "Error cancelling appointment.");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-        }
-    }
 
     private void clearAppointmentFields() {
-        txtStudentName.setText("");
-        txtCounselorName.setText("");
+        txtStudentID.setText("");
+        comboCounselorName.setSelectedIndex(0);
         datePicker.getModel().setValue(null);
         timeSpinner.setValue(new java.util.Date());
         comboBoxStatus.setSelectedIndex(0);
@@ -648,9 +612,9 @@ public class MainDashboard extends javax.swing.JFrame {
         jTabbedPane2.setFont(new Font("Arial", Font.PLAIN, 16));
 
         // === APPOINTMENTS TAB ===
-        jDesktopPane1 = new JDesktopPane();
-        jLabel1 = new JLabel("Student Number:");
-        jLabel2 = new JLabel("Counselor ID:");
+       jDesktopPane1 = new JDesktopPane();
+        jLabel1 = new JLabel("Student ID:");
+        jLabel2 = new JLabel("Counselor Name:");
         jLabel3 = new JLabel("Date:");
         jLabel4 = new JLabel("Time:");
         jLabel5 = new JLabel("Status:");
@@ -667,8 +631,8 @@ public class MainDashboard extends javax.swing.JFrame {
         jLabel5.setForeground(Color.WHITE);
         jLabel5.setFont(labelFont);
 
-        txtStudentName = new JTextField();
-        txtCounselorName = new JTextField();
+        txtStudentID  = new JTextField();
+        comboCounselorName = new JComboBox(); 
         UtilDateModel model = new UtilDateModel();
         Properties p = new Properties();
         p.put("text.today", "Today");
@@ -682,30 +646,35 @@ public class MainDashboard extends javax.swing.JFrame {
         JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "HH:mm");
         timeSpinner.setEditor(timeEditor);
 
-        txtStudentName.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
+        Dimension fieldSize = new Dimension(160, 30);
+
+        txtStudentID.setFont(new Font("Arial", Font.PLAIN, 14));
+        comboCounselorName.setFont(new Font("Arial", Font.PLAIN, 14));
         datePicker.setFont(new Font("Arial", Font.PLAIN, 14));
         timeSpinner.setFont(new Font("Arial", Font.PLAIN, 14));
-
         comboBoxStatus = new JComboBox<>(new String[]{"Scheduled", "Cancelled", "Completed"});
         comboBoxStatus.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        jTable2 = new JTable(new DefaultTableModel(
-                new Object[][]{},
-                new String[]{"Student Number", "Counselor ID", "Date", "Time", "Status"}
-        ));
-        jTable2.setFont(new Font("Arial", Font.PLAIN, 12));
-        jScrollPane2 = new JScrollPane(jTable2);
+        DefaultTableModel modelAppointment = new DefaultTableModel(new Object[][]{},new String[]{"ID", "Student Name", "Counselor Name", "Date", "Time", "Status"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // makes all cells read only
+            }
+        };
+        tblAppointment = new JTable(modelAppointment);
+        tblAppointment.setFont(new Font("Arial", Font.PLAIN, 12));
+        jScrollPane2 = new JScrollPane(tblAppointment);
 
         btnCancelAppointment = new JButton("Cancel Appointment");
         btnBookAppointment = new JButton("Book Appointment");
         btnUpdateAppointment1 = new JButton("Update Appointment");
+        btnViewAllAppointments=new JButton("View All Appointments");
         btnClearFields = new JButton("Clear Fields");
         btnExitAppointments = new JButton("Exit");
 
         Color buttonColor = new Color(100, 149, 237);
         Font buttonFont = new Font("Arial", Font.BOLD, 14);
-        for (JButton btn : new JButton[]{btnBookAppointment, btnUpdateAppointment1, btnCancelAppointment, btnClearFields, btnExitAppointments}) {
+        for (JButton btn : new JButton[]{btnViewAllAppointments,btnBookAppointment, btnUpdateAppointment1, btnCancelAppointment, btnClearFields, btnExitAppointments}) {
             btn.setBackground(buttonColor);
             btn.setForeground(Color.WHITE);
             btn.setFont(buttonFont);
@@ -723,39 +692,42 @@ public class MainDashboard extends javax.swing.JFrame {
         timePanelWrapper.add(timeSpinner);
         timePanelWrapper.setPreferredSize(new Dimension(160, 30));
 
+
+
         GroupLayout appLayout = new GroupLayout(jDesktopPane1);
         jDesktopPane1.setLayout(appLayout);
         appLayout.setHorizontalGroup(
                 appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(appLayout.createSequentialGroup()
-                                .addGap(20)
-                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel1)
-                                        .addComponent(txtStudentName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel2)
-                                        .addComponent(txtCounselorName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel3)
-                                        .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel4)
-                                        .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel5)
-                                        .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
-                                .addGap(20)
-                                .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(appLayout.createSequentialGroup()
-                                                .addComponent(btnBookAppointment)
-                                                .addGap(10)
-                                                .addComponent(btnUpdateAppointment1)
-                                                .addGap(10)
-                                                .addComponent(btnCancelAppointment))
-                                        .addGroup(appLayout.createSequentialGroup()
-                                                .addGap(240)
-                                                .addComponent(btnClearFields)
-                                                .addGap(10)
-                                                .addComponent(btnExitAppointments)))
-                                .addContainerGap(20, Short.MAX_VALUE))
-        );
+                            .addGap(20)
+                            .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel1)
+                                .addComponent(txtStudentID, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel2)
+                                .addComponent(comboCounselorName, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel3)
+                                .addComponent(datePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel4)
+                                .addComponent(timePanelWrapper, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel5)
+                                .addComponent(comboBoxStatus, GroupLayout.PREFERRED_SIZE, 160, GroupLayout.PREFERRED_SIZE))
+                            .addGap(20)
+                            .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 480, GroupLayout.PREFERRED_SIZE)
+                                .addGroup(appLayout.createSequentialGroup()
+                                    .addComponent(btnBookAppointment)
+                                    .addGap(10)
+                                    .addComponent(btnUpdateAppointment1)
+                                    .addGap(10)
+                                    .addComponent(btnCancelAppointment))
+                                .addGroup(appLayout.createSequentialGroup()
+                                    .addComponent(btnViewAllAppointments)
+                                    .addGap(10)
+                                    .addComponent(btnClearFields)
+                                    .addGap(10)
+                                    .addComponent(btnExitAppointments)))
+                            .addContainerGap(20, Short.MAX_VALUE))
+                );
         appLayout.setVerticalGroup(
                 appLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(appLayout.createSequentialGroup()
@@ -764,11 +736,11 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addGroup(appLayout.createSequentialGroup()
                                                 .addComponent(jLabel1)
                                                 .addGap(6)
-                                                .addComponent(txtStudentName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(txtStudentID, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(jLabel2)
                                                 .addGap(6)
-                                                .addComponent(txtCounselorName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(comboCounselorName, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                                 .addGap(10)
                                                 .addComponent(jLabel3)
                                                 .addGap(6)
@@ -789,6 +761,7 @@ public class MainDashboard extends javax.swing.JFrame {
                                         .addComponent(btnCancelAppointment))
                                 .addGap(15)
                                 .addGroup(appLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnViewAllAppointments)
                                         .addComponent(btnClearFields)
                                         .addComponent(btnExitAppointments))
                                 .addContainerGap(20, Short.MAX_VALUE))
@@ -1075,14 +1048,15 @@ public class MainDashboard extends javax.swing.JFrame {
     private JPanel panelCounselors, panelFeedback;
     private JLabel jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7, jLabel8, jLabel9, jLabel10;
     private JLabel labCounselor, labSpecialization, labCounselorEmail, labAvailability, labSearchCounselor;
-    private JTextField txtStudentName, txtCounselorNameInput, txtCounselorName, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSearchCounselor;
+    private JTextField txtStudentID, txtCounselorNameInput, txtSpecialization, txtCounselorEmail, txtStudentNumber, txtSearchCounselor;
+    private JComboBox<ComboItem> comboCounselorName;
     private JDatePickerImpl datePicker, feedbackDatePicker;
     private JSpinner timeSpinner;
     private JComboBox<String> comboBoxStatus, jComboBox1, jComboBox2, ratingComboBox;
-    private JTable jTable1, jTable2, jTable3;
+    private JTable jTable1, tblAppointment, jTable3;
     private JScrollPane jScrollPane1, jScrollPane2, jScrollPane3, jScrollPane4;
     private JTextArea jTextArea1;
-    private JButton btnCancelAppointment, btnBookAppointment, btnUpdateAppointment1, btnClearFields, btnExitAppointments;
+    private JButton btnCancelAppointment, btnBookAppointment, btnUpdateAppointment1, btnClearFields, btnExitAppointments,btnViewAllAppointments;
     private JButton btnAddCounselor, btnUpdateCounselor, btnRemoveCounselor, btnViewAllCounselors, btnClearCounselor, btnExitCounselor;
     private JButton btnSubmitFeedback, btnEditFeedback, btnDeleteFeedback, btnViewFeedback;
 

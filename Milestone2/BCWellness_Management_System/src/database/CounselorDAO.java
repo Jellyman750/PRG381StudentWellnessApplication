@@ -224,11 +224,27 @@ public class CounselorDAO {
             e.printStackTrace();
         }
     }
-
-
-
-
-
+//method that gets the counselors name and surname from the ID
+    public Counselor getCounselorByID(int id) {
+        String query = "SELECT * FROM Counselor WHERE CounselorID = ?";
+    try (PreparedStatement stmt = dbConnection.getConnection().prepareStatement(query)) {
+        stmt.setInt(1, id);
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+            return new Counselor(
+                rs.getInt("CounselorID"),
+                rs.getString("counselorName"),
+                rs.getString("counselorSurname"),
+                rs.getString("counselorEmail"),
+                rs.getString("specialisation"),
+                rs.getBoolean("availability")
+            );
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return null;
+    }
 
 }
 
