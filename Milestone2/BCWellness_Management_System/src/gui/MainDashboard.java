@@ -33,11 +33,24 @@ public class MainDashboard extends javax.swing.JFrame {
         initComponents();
         try {
             db.connect();
+            db.createCounselor();
+            db.createAppointment();
+            db.createFeedback();
+
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
         }
         addActionListeners();
+        loadScheduledAppointments();
+        jTabbedPane2.addChangeListener(e -> {
+            int selectedTab = jTabbedPane2.getSelectedIndex();
+            String selectedTitle = jTabbedPane2.getTitleAt(selectedTab);
+
+            if (selectedTitle.equals("Appointments")) {
+                loadScheduledAppointments();
+            }
+        });
 
     }
 
@@ -82,6 +95,23 @@ public class MainDashboard extends javax.swing.JFrame {
         btnViewFeedback.addActionListener(e -> viewFeedback());
     }
 
+    private void loadScheduledAppointments() {
+        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+        model.setRowCount(0);
+
+        ArrayList<Appointment> appointments = db.getScheduledAppointments();
+
+        for (Appointment a : appointments) {
+            model.addRow(new Object[]{
+                    a.getStudentNumber(),
+                    a.getCounselorID(),
+                    a.getAppointmentDate().toString(),
+                    a.getAppointmentTime().toString(),
+                    a.getStatus()
+            });
+        }
+    }
+
     // Dummy methods for UI
     private void bookAppointment() {
         if (txtStudentName.getText().isEmpty() || txtCounselorName.getText().isEmpty() ||
@@ -109,6 +139,20 @@ public class MainDashboard extends javax.swing.JFrame {
         clearAppointmentFields();
     }
 
+    private void loadAppointments() {
+        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+        model.setRowCount(0); // Clear existing data
+
+        for (Appointment appt : db.viewAppointment()) {
+            model.addRow(new Object[]{
+                    appt.getStudentNumber(),
+                    appt.getCounselorID(),
+                    appt.getAppointmentDate().toString(),
+                    appt.getAppointmentTime().toString(),
+                    appt.getStatus()
+            });
+        }
+    }
 
     private void updateAppointment() {
         JOptionPane.showMessageDialog(this, "Update Appointment clicked (logic to be added).");

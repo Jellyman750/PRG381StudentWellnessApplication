@@ -63,46 +63,107 @@ public class DBConnection {
  //CRUD operations
     //create tables
     //Appointment
-    public void createAppointment(){
-        if (tableExists("Appointment")){
-            System.out.println("Appointment table already exists");
-        }
-        else{
-            try{
-            String query="CREATE TABLE Appointment (" +
-                "appointmentID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
-                "studentNumber VARCHAR(50) NOT NULL," +
-                "counselorID INT NOT NULL, " +
-                "appointmentDate DATE NOT NULL," +
-                "appointmentTime TIME NOT NULL," +
-                "status VARCHAR(20) NOT NULL," + // eg Scheduled, Completed, Cancelled
-                "FOREIGN KEY (counselorID) REFERENCES Counselors(counselorID) )";
-            this.conn.createStatement().execute(query);
-            //populate table
-            String insert = "INSERT INTO Appointment (studentNumber, counselorID, appointmentDate, appointmentTime, status) VALUES " +
-                    "(1001, 1, '2025-07-01', '09:00:00', 'Scheduled')," +
-                    "(1002, 2, '2025-07-02', '10:00:00', 'Completed')," +
-                    "(1003, 3, '2025-07-03', '11:00:00', 'Cancelled')," +
-                    "(1004, 4, '2025-07-04', '12:00:00', 'Scheduled')," +
-                    "(1005, 5, '2025-07-05', '13:00:00', 'Completed')," +
-                    "(1006, 6, '2025-07-06', '14:00:00', 'Cancelled')," +
-                    "(1007, 7, '2025-07-07', '15:00:00', 'Scheduled')," +
-                    "(1008, 8, '2025-07-08', '16:00:00', 'Completed')," +
-                    "(1009, 9, '2025-07-09', '08:00:00', 'Cancelled')," +
-                    "(1010, 10, '2025-07-10', '09:30:00', 'Scheduled')," +
-                    "(1011, 11, '2025-07-11', '10:30:00', 'Completed')," +
-                    "(1012, 12, '2025-07-12', '11:30:00', 'Cancelled')," +
-                    "(1013, 13, '2025-07-13', '12:30:00', 'Scheduled')," +
-                    "(1014, 14, '2025-07-14', '13:30:00', 'Completed')," +
-                    "(1015, 15, '2025-07-15', '14:30:00', 'Cancelled')";
-            conn.createStatement().execute(insert);
-            System.out.println("Appointment table created and populated.");
-            }
-            catch(SQLException ex){
-                ex.printStackTrace();
-            }
+    public void createAppointment() {
+     if (tableExists("Appointment")) {
+         System.out.println("Appointment table already exists");
+
+         try {
+             String query = "SELECT * FROM Appointment FETCH FIRST 5 ROWS ONLY";
+             ResultSet result = this.conn.createStatement().executeQuery(query);
+
+             System.out.println("First 5 Appointments:");
+             boolean hasData = false;
+             while (result.next()) {
+                 hasData = true;
+                 int id = result.getInt("appointmentID");
+                 String studentNumber = result.getString("studentNumber");
+                 int counselorID = result.getInt("counselorID");
+                 Date date = result.getDate("appointmentDate");
+                 Time time = result.getTime("appointmentTime");
+                 String status = result.getString("status");
+
+                 System.out.println("ID: " + id + ", Student: " + studentNumber + ", Counselor: " + counselorID +
+                         ", Date: " + date + ", Time: " + time + ", Status: " + status);
+             }
+             if (!hasData) {
+                 System.out.println("No appointments found.");
+             }
+
+         } catch (SQLException ex) {
+             ex.printStackTrace();
+         }
+     } else {
+         createAppointmentTable();
+         populateAppointmentTable();
+     }
+ }
+
+    public void createAppointmentTable() {
+        try {
+            String query = "CREATE TABLE Appointment (" +
+                    "appointmentID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
+                    "studentNumber VARCHAR(50) NOT NULL, " +
+                    "counselorID INT NOT NULL, " +
+                    "appointmentDate DATE NOT NULL, " +
+                    "appointmentTime TIME NOT NULL, " +
+                    "status VARCHAR(20) NOT NULL, " +
+                    "FOREIGN KEY (counselorID) REFERENCES Counselor(counselorID)" +
+                    ")";
+            conn.createStatement().execute(query);
+            System.out.println("Appointment table created.");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
     }
+
+    public void populateAppointmentTable() {
+        try {
+            String insert = "INSERT INTO Appointment (studentNumber, counselorID, appointmentDate, appointmentTime, status) VALUES " +
+                    "('1001', 1, '2025-07-01', '09:00:00', 'Scheduled')," +
+                    "('1002', 2, '2025-07-02', '10:00:00', 'Completed')," +
+                    "('1003', 3, '2025-07-03', '11:00:00', 'Cancelled')," +
+                    "('1004', 4, '2025-07-04', '12:00:00', 'Scheduled')," +
+                    "('1005', 5, '2025-07-05', '13:00:00', 'Completed')," +
+                    "('1006', 6, '2025-07-06', '14:00:00', 'Cancelled')," +
+                    "('1007', 7, '2025-07-07', '15:00:00', 'Scheduled')," +
+                    "('1008', 8, '2025-07-08', '16:00:00', 'Completed')," +
+                    "('1009', 9, '2025-07-09', '08:00:00', 'Cancelled')," +
+                    "('1010', 10, '2025-07-10', '09:30:00', 'Scheduled')," +
+                    "('1011', 11, '2025-07-11', '10:30:00', 'Completed')," +
+                    "('1012', 12, '2025-07-12', '11:30:00', 'Cancelled')," +
+                    "('1013', 13, '2025-07-13', '12:30:00', 'Scheduled')," +
+                    "('1014', 14, '2025-07-14', '13:30:00', 'Completed')," +
+                    "('1015', 15, '2025-07-15', '14:30:00', 'Cancelled')";
+            conn.createStatement().execute(insert);
+            System.out.println("Appointment table populated.");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public ArrayList<Appointment> getScheduledAppointments() {
+        ArrayList<Appointment> list = new ArrayList<>();
+        try {
+            String query = "SELECT * FROM Appointment WHERE status = 'Scheduled'";
+            ResultSet result = conn.createStatement().executeQuery(query);
+
+            while (result.next()) {
+                int id = result.getInt("appointmentID");
+                String studentNumber = result.getString("studentNumber");
+                int counselorID = result.getInt("counselorID");
+                Date date = result.getDate("appointmentDate");
+                Time time = result.getTime("appointmentTime");
+                String status = result.getString("status");
+
+                list.add(new Appointment(id, Integer.parseInt(studentNumber), counselorID, date, time, status));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return list;
+    }
+
+
     //Counselor
     public void createCounselor(){
         if (tableExists("Counselor")){
@@ -145,47 +206,50 @@ public class DBConnection {
         }
     }
     //Feedback
-    public void createFeedback(){
-        if (tableExists("Feedback")){
+    public void createFeedback() {
+        if (tableExists("Feedback")) {
             System.out.println("Feedback table already exists");
-        }
-        else{
-            try{
-            String query=" CREATE TABLE Feedback (" +
-                "feedbackID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY," +
-                "appointmentID INT NOT NULL," +
-                "studentNumber VARCHAR(50) NOT NULL, " +
-                "rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5), " +
-                "comments VARCHAR(500), " +
-                "submissionDate DATE NOT NULL ," +
-                "FOREIGN KEY (appointment_id) REFERENCES Appointments(id))";
-            this.conn.createStatement().execute(query);
-            //populate
-            String insert = "INSERT INTO Feedback (appointmentID, studentNumber, rating, comments, submissionDate) VALUES " +
-                    "(1, 1001, 5, 'Great session!', '2025-07-01')," +
-                    "(2, 1002, 4, 'Very helpful.', '2025-07-02')," +
-                    "(3, 1003, 3, 'It was okay.', '2025-07-03')," +
-                    "(4, 1004, 5, 'Excellent!', '2025-07-04')," +
-                    "(5, 1005, 2, 'Could be better.', '2025-07-05')," +
-                    "(6, 1006, 4, 'Pretty good.', '2025-07-06')," +
-                    "(7, 1007, 3, 'Not bad.', '2025-07-07')," +
-                    "(8, 1008, 5, 'Loved it!', '2025-07-08')," +
-                    "(9, 1009, 1, 'Disappointed.', '2025-07-09')," +
-                    "(10, 1010, 2, 'Meh.', '2025-07-10')," +
-                    "(11, 1011, 5, 'Amazing experience.', '2025-07-11')," +
-                    "(12, 1012, 3, 'Fine.', '2025-07-12')," +
-                    "(13, 1013, 4, 'Quite useful.', '2025-07-13')," +
-                    "(14, 1014, 4, 'Would recommend.', '2025-07-14')," +
-                    "(15, 1015, 5, 'Perfect!', '2025-07-15')";
-            conn.createStatement().execute(insert);
-            System.out.println("Feedback table created and populated.");
-            }
-            catch(SQLException ex){
+
+        } else {
+            try {
+                String query = "CREATE TABLE Feedback (" +
+                        "feedbackID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, " +
+                        "appointmentID INT NOT NULL, " +
+                        "studentNumber VARCHAR(50) NOT NULL, " +
+                        "rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5), " +
+                        "comments VARCHAR(500), " +
+                        "submissionDate DATE NOT NULL, " +
+                        "FOREIGN KEY (appointmentID) REFERENCES Appointment(appointmentID)" +
+                        ")";
+                this.conn.createStatement().execute(query);
+
+                // Populate with correct studentNumbers as VARCHAR
+                String insert = "INSERT INTO Feedback (appointmentID, studentNumber, rating, comments, submissionDate) VALUES " +
+                        "(1, '1001', 5, 'Great session!', '2025-07-01')," +
+                        "(2, '1002', 4, 'Very helpful.', '2025-07-02')," +
+                        "(3, '1003', 3, 'It was okay.', '2025-07-03')," +
+                        "(4, '1004', 5, 'Excellent!', '2025-07-04')," +
+                        "(5, '1005', 2, 'Could be better.', '2025-07-05')," +
+                        "(6, '1006', 4, 'Pretty good.', '2025-07-06')," +
+                        "(7, '1007', 3, 'Not bad.', '2025-07-07')," +
+                        "(8, '1008', 5, 'Loved it!', '2025-07-08')," +
+                        "(9, '1009', 1, 'Disappointed.', '2025-07-09')," +
+                        "(10, '1010', 2, 'Meh.', '2025-07-10')," +
+                        "(11, '1011', 5, 'Amazing experience.', '2025-07-11')," +
+                        "(12, '1012', 3, 'Fine.', '2025-07-12')," +
+                        "(13, '1013', 4, 'Quite useful.', '2025-07-13')," +
+                        "(14, '1014', 4, 'Would recommend.', '2025-07-14')," +
+                        "(15, '1015', 5, 'Perfect!', '2025-07-15')";
+                conn.createStatement().execute(insert);
+
+                System.out.println("Feedback table created and populated.");
+            } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }
     }
-    
+
+
     //insert method
     //Appointment
     public void insertAppointment(int studentNumber, int counselorID, java.sql.Date appointmentDate, java.sql.Time appointmentTime, String status) {
@@ -211,7 +275,7 @@ public class DBConnection {
             ps.setString(3, email);
             ps.setString(4, specialisation);
             ps.setBoolean(5, availability);
-            ps.executeUpdate();     
+            ps.executeUpdate();
         }
         catch(SQLException ex){
             ex.printStackTrace();

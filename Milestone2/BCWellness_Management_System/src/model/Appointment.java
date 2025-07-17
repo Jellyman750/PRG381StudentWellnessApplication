@@ -37,6 +37,7 @@ public class Appointment {
     public void setAppointmentTime(Time appointmentTime) { this.appointmentTime = appointmentTime; }
     public void setStatus(String status) { this.status = status; }
 
+
     @Override
     public String toString() {
         return "Appointment{" +
